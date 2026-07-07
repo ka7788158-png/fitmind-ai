@@ -664,7 +664,7 @@
     btn.disabled = true;
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/calculate-calories', {
+      const res = await fetch('https://fitmind-ai-backend-wopz.onrender.com/calculate-calories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ food_description: food })
@@ -729,7 +729,7 @@
 
     try {
       // update backend
-      await fetch(`http://127.0.0.1:8000/member/${member.member_id || member.id}`, {
+      await fetch(`https://fitmind-ai-backend-wopz.onrender.com/member/${member.member_id || member.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ weight, height, goal })
@@ -765,7 +765,7 @@
     try {
       console.log("Member data:", member);
       console.log("Member ID:", member.member_id || member.id);
-      const res = await fetch(`http://127.0.0.1:8000/adaptive-coaching/${member.member_id || member.id}`);
+      const res = await fetch(`https://fitmind-ai-backend-wopz.onrender.com/adaptive-coaching/${member.member_id || member.id}`);
       const data = await res.json();
 
       const isUpgrade = data.should_upgrade;

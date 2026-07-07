@@ -1,4 +1,4 @@
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = 'https://fitmind-ai-backend-wopz.onrender.com';
 
 const API = {
   async generateDailyPlan(memberId, profile, dayNumber, dayName) {

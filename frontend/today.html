@@ -358,7 +358,7 @@ async function generateRestDayPlan() {
   };
 
   try {
-    const res = await fetch('http://127.0.0.1:8000/modify-plan', {
+    const res = await fetch('https://fitmind-ai-backend-wopz.onrender.com/modify-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

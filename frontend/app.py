@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 import json
 
-API_URL = "http://127.0.0.1:8000"
+API_URL = "https://fitmind-ai-backend-wopz.onrender.com"
 
 st.set_page_config(page_title="Gym AI Coach", page_icon="💪", layout="wide")
 
