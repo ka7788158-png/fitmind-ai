@@ -15,4 +15,4 @@ passlib
 python-jose[cryptography]
 langgraph
 langchain-mistralai
-langchian-core
+langchain-core
