@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard — FitMind AI</title>
+<link rel="stylesheet" href="css/style.css"/>
+<style>
+
+  .bmi-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+    margin-bottom: 28px;
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px; align-items: center;
+  }
+  .bmi-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.8rem; font-weight: 700; line-height: 1;
+  }
+  .bmi-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; }
+  .bmi-category {
+    font-size: 0.85rem; font-weight: 700;
+    padding: 4px 12px; border-radius: 20px;
+    display: inline-block; margin-top: 8px;
+  }
+  .bmi-underweight { background: rgba(96,180,255,0.15); color: #60b4ff; }
+  .bmi-normal { background: var(--green-glow); color: var(--green-400); }
+  .bmi-overweight { background: var(--amber-glow); color: var(--amber); }
+  .bmi-obese { background: var(--red-glow); color: var(--red); }
+  .bmi-bar-wrap {
+    height: 10px; border-radius: 20px; overflow: hidden;
+    background: var(--navy-700); position: relative;
+  }
+  .bmi-bar-fill {
+    height: 100%; border-radius: 20px;
+    background: linear-gradient(90deg, #60b4ff, var(--green-400), var(--amber), var(--red));
+    width: 100%;
+  }
+  .bmi-pointer {
+    position: absolute; top: -3px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: white; border: 2px solid var(--navy-900);
+    transform: translateX(-50%);
+    transition: left 0.5s ease;
+  }
+
+  .quote-card {
+    background: linear-gradient(135deg, var(--navy-700), var(--navy-800));
+    border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 24px;
+    margin-bottom: 28px; position: relative; overflow: hidden;
+  }
+  .quote-card::before {
+    content: '"'; position: absolute; top: -10px; left: 12px;
+    font-size: 6rem; color: rgba(0,255,135,0.06);
+    font-family: 'Space Grotesk', sans-serif; line-height: 1;
+  }
+  .quote-text {
+    font-size: 0.95rem; color: var(--text-primary);
+    line-height: 1.7; font-style: italic; position: relative; z-index: 1;
+  }
+  .quote-author {
+    font-size: 0.78rem; color: var(--green-400);
+    margin-top: 8px; font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  .calorie-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+    margin-bottom: 28px;
+  }
+  .calorie-header {
+    display: flex; justify-content: space-between;
+    align-items: center; margin-bottom: 16px;
+  }
+  .calorie-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.8rem; font-weight: 700; color: var(--amber);
+  }
+  .calorie-goal { font-size: 0.82rem; color: var(--text-muted); }
+  .calorie-bar-wrap { background: var(--navy-700); border-radius: 20px; height: 10px; overflow: hidden; margin-bottom: 16px; }
+  .calorie-bar-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, var(--amber), #ff6b35); transition: width 0.4s ease; }
+  .calorie-meals { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .meal-item {
+    background: var(--navy-800); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 8px;
+    text-align: center; cursor: pointer; transition: all 0.2s;
+  }
+  .meal-item:hover { border-color: var(--amber); }
+  .meal-item.logged { border-color: var(--amber); background: var(--amber-glow); }
+  .meal-icon { font-size: 1.2rem; margin-bottom: 4px; }
+  .meal-name { font-size: 0.65rem; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .meal-cal { font-size: 0.78rem; font-weight: 700; color: var(--amber); font-family: 'Space Grotesk', sans-serif; }
+  .meal-input {
+    width: 100%; background: var(--navy-900);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 4px 6px; color: var(--text-primary);
+    font-size: 0.75rem; text-align: center; margin-top: 6px;
+    outline: none;
+  }
+  .meal-input:focus { border-color: var(--amber); }
+
+  .greeting-card {
+    background: linear-gradient(135deg, var(--navy-700) 0%, var(--navy-800) 100%);
+    border: 1px solid var(--border-hover);
+    border-radius: var(--radius-lg);
+    padding: 32px; margin-bottom: 28px;
+    position: relative; overflow: hidden;
+  }
+  .greeting-card::before {
+    content: '';
+    position: absolute; top: -60px; right: -60px;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, var(--green-glow-strong) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .greeting-time { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .greeting-name { font-size: 1.9rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 8px; }
+  .greeting-name span { color: var(--green-400); }
+  .greeting-sub { color: var(--text-secondary); font-size: 0.92rem; }
+  .greeting-actions { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+
+  .streak-flame { font-size: 2.4rem; line-height: 1; }
+  .streak-num { font-family: 'Space Grotesk', sans-serif; font-size: 2.8rem; font-weight: 700; color: var(--green-400); line-height: 1; }
+  .streak-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; }
+
+  .water-card .water-display {
+    display: flex; align-items: baseline; gap: 6px; margin-bottom: 16px;
+  }
+  .water-ml { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 700; color: #60b4ff; }
+  .water-goal { font-size: 0.85rem; color: var(--text-muted); }
+  .water-progress { margin-bottom: 16px; }
+  .water-progress .progress-bar-fill { background: linear-gradient(90deg, #1e6fff, #60b4ff); }
+  .water-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-water {
+    padding: 7px 14px; border-radius: var(--radius-sm);
+    background: rgba(96,180,255,0.1); color: #60b4ff;
+    border: 1px solid rgba(96,180,255,0.25);
+    font-size: 0.82rem; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; font-family: 'Space Grotesk', sans-serif;
+  }
+  .btn-water:hover { background: rgba(96,180,255,0.2); }
+
+  .today-split {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin-bottom: 28px;
+  }
+  .split-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .split-label { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .split-value { font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem; font-weight: 700; }
+  .split-sub { font-size: 0.82rem; color: var(--text-secondary); }
+
+  .quick-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .quick-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+    text-align: center; cursor: pointer;
+    text-decoration: none; color: inherit;
+    transition: all 0.2s; display: flex;
+    flex-direction: column; align-items: center; gap: 10px;
+  }
+  .quick-card:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: var(--shadow-green); }
+  .quick-icon { font-size: 1.8rem; }
+  .quick-label { font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); font-family: 'Space Grotesk', sans-serif; }
+
+  .weekly-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 8px; margin-top: 16px;
+  }
+  .week-day {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 6px;
+  }
+  .week-day-label { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; }
+  .week-day-dot {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 700; color: var(--text-muted);
+    transition: all 0.2s;
+  }
+  .week-day-dot.done { background: var(--green-400); border-color: var(--green-400); color: var(--navy-950); }
+  .week-day-dot.today { border-color: var(--green-400); color: var(--green-400); }
+  .week-day-dot.rest { background: var(--navy-700); border-color: var(--navy-600); color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">Fit<span>Mind</span> AI</div>
+  <div class="nav-right">
+    <span class="nav-member-badge" id="nav-member-name">Loading...</span>
+    <button class="nav-link" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-label">Main</div>
+    <a class="sidebar-link active" href="dashboard.html"><span class="sidebar-icon">🏠</span> Dashboard</a>
+    <a class="sidebar-link" href="today.html"><span class="sidebar-icon">⚡</span> Today's Plan</a>
+    <a class="sidebar-link" href="chat.html"><span class="sidebar-icon">🤖</span> Coach Chat</a>
+
+    <div class="sidebar-label">Progress</div>
+    <a class="sidebar-link" href="heatmap.html"><span class="sidebar-icon">📅</span> Heatmap</a>
+    <a class="sidebar-link" href="progress.html"><span class="sidebar-icon">📈</span> My Progress</a>
+  </aside>
+
+  <main class="content">
+
+    <!-- GREETING -->
+    <div class="greeting-card">
+      <div class="greeting-time" id="greeting-time"></div>
+      <div class="greeting-name" id="greeting-name">Hey, <span>Champion!</span></div>
+      <div class="greeting-sub" id="greeting-sub"></div>
+      <div class="greeting-actions">
+        <a href="today.html" class="btn btn-primary">⚡ Today's Workout</a>
+        <a href="chat.html" class="btn btn-secondary">🤖 Ask Coach</a>
+      </div>
+    </div>
+
+    <!-- STATS ROW -->
+    <div class="stats-grid" style="margin-bottom:28px">
+      <div class="stat-card">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="streak-flame">🔥</div>
+          <div>
+            <div class="streak-num" id="streak-num">0</div>
+            <div class="streak-label">Day Streak</div>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card" id="today-focus-card">
+        <div class="stat-label" style="margin-bottom:6px">Today's Focus</div>
+        <div class="stat-value" id="today-focus" style="font-size:1.3rem">—</div>
+        <div class="stat-sub" id="today-day-num"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label" style="margin-bottom:6px">This Week</div>
+        <div class="stat-value" id="week-done">0/6</div>
+        <div class="stat-sub">days completed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label" style="margin-bottom:6px">Goal</div>
+        <div class="stat-value" id="member-goal" style="font-size:1.1rem;text-transform:capitalize">—</div>
+        <div class="stat-sub" id="member-exp"></div>
+      </div>
+    </div>
+
+    <!-- TODAY SPLIT + WATER -->
+    <div class="today-split">
+      <div class="split-card">
+        <div class="split-label">Today's Date</div>
+        <div class="split-value" id="today-date">—</div>
+        <div class="split-sub" id="today-weekday">—</div>
+      </div>
+      <div class="split-card water-card">
+        <div class="split-label">💧 Water Intake</div>
+        <div class="water-display">
+          <div class="water-ml" id="water-ml">0</div>
+          <div class="water-goal">/ 3000 ml</div>
+        </div>
+        <div class="water-progress progress-bar-wrap">
+          <div class="progress-bar-fill" id="water-bar" style="width:0%"></div>
+        </div>
+        <div class="water-btns">
+          <button class="btn-water" onclick="addWater(250)">+250ml</button>
+          <button class="btn-water" onclick="addWater(500)">+500ml</button>
+          <button class="btn-water" onclick="addWater(-250)">-250ml</button>
+          <button class="btn-water" onclick="resetWater()" style="color:var(--text-muted)">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUOTE OF THE DAY -->
+    <div class="quote-card">
+      <div class="quote-text" id="quote-text">Loading today's motivation...</div>
+      <div class="quote-author" id="quote-author"></div>
+    </div>
+
+    <!-- BMI CARD -->
+    <div class="bmi-card">
+      <div>
+        <div class="stat-label" style="margin-bottom:8px">BMI Calculator</div>
+        <div class="bmi-value" id="bmi-value" style="color:var(--green-400)">—</div>
+        <div class="bmi-label">Body Mass Index</div>
+        <div class="bmi-category" id="bmi-category">—</div>
+      </div>
+      <div>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:10px">BMI Scale</div>
+        <div class="bmi-bar-wrap">
+          <div class="bmi-bar-fill"></div>
+          <div class="bmi-pointer" id="bmi-pointer" style="left:0%"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:0.65rem;color:var(--text-muted)">
+          <span>16</span><span>18.5</span><span>25</span><span>30</span><span>40</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:10px">Your Stats</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="body-stat-pill" style="background:var(--navy-700);border-radius:8px;padding:8px 12px">
+            ⚖️ Weight: <span id="bmi-weight" style="color:var(--text-primary);font-weight:600">—</span>
+          </div>
+          <div class="body-stat-pill" style="background:var(--navy-700);border-radius:8px;padding:8px 12px">
+            📏 Height: <span id="bmi-height" style="color:var(--text-primary);font-weight:600">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALORIE TRACKER -->
+
+    <div class="calorie-card">
+      <div class="calorie-header">
+        <div>
+          <div class="card-title" style="margin-bottom:2px">🔥 Calorie Tracker</div>
+          <div class="calorie-goal">Daily goal: <span id="cal-goal-text">2500</span> kcal</div>
+        </div>
+        <div style="text-align:right">
+          <div class="calorie-num" id="cal-total">0</div>
+          <div style="font-size:0.75rem;color:var(--text-muted)">kcal consumed</div>
+        </div>
+      </div>
+      <div class="calorie-bar-wrap">
+        <div class="calorie-bar-fill" id="cal-bar" style="width:0%"></div>
+      </div>
+
+      <!-- AI FOOD INPUT -->
+      <div style="display:flex;gap:10px;margin-bottom:16px">
+        <input class="form-input" type="text" id="ai-food-input"
+          placeholder="e.g. I ate 2 rotis, dal and one apple..."
+          onkeydown="if(event.key==='Enter') analyzeFood()"
+          style="flex:1"/>
+        <button class="btn btn-primary" id="ai-food-btn" onclick="analyzeFood()" style="white-space:nowrap">
+          🤖 Calculate
+        </button>
+      </div>
+
+      <!-- AI RESULT -->
+      <div id="ai-food-result" style="display:none;margin-bottom:16px">
+        <div style="background:var(--navy-800);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px">
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em">AI Estimated</div>
+          <div id="ai-items" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:10px">
+            <div style="font-size:0.85rem;color:var(--text-secondary)">Total: <span id="ai-total" style="color:var(--amber);font-weight:700;font-family:'Space Grotesk',sans-serif">0 kcal</span></div>
+            <div style="display:flex;gap:8px">
+              <select class="form-input" id="ai-meal-select" style="padding:6px 10px;font-size:0.8rem">
+                <option value="breakfast">Breakfast</option>
+                <option value="midmorning">Mid-Morning</option>
+                <option value="lunch">Lunch</option>
+                <option value="evening">Evening</option>
+                <option value="dinner">Dinner</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="addAICalories()">Add →</button>
+              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ai-food-result').style.display='none'">✕</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="calorie-meals" id="calorie-meals"></div>
+    </div>
+
+<!-- UPDATE STATS -->
+    <div class="card" style="margin-bottom:28px">
+      <div class="card-title">⚙️ Update Your Stats</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:flex-end">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Weight (kg)</label>
+          <input class="form-input" type="number" id="update-weight" placeholder="70" step="0.1"/>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Height (cm)</label>
+          <input class="form-input" type="number" id="update-height" placeholder="175" step="0.5"/>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Goal</label>
+          <select class="form-input" id="update-goal">
+            <option value="muscle gain">Muscle Gain</option>
+            <option value="weight loss">Weight Loss</option>
+            <option value="maintain fitness">Maintain Fitness</option>
+            <option value="improve stamina">Improve Stamina</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="updateStats()">Update</button>
+      </div>
+      <div id="update-alert" style="margin-top:10px"></div>
+    </div>
+
+<!-- ADAPTIVE COACHING -->
+    <div class="card" style="margin-bottom:28px" id="adaptive-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <div class="card-title" style="margin-bottom:0">🧠 AI Coaching Assessment</div>
+        <button class="btn btn-primary btn-sm" id="adaptive-btn" onclick="runAdaptiveCoaching()">Check My Progress</button>
+      </div>
+      <div id="adaptive-result">
+        <div style="text-align:center;padding:24px;color:var(--text-muted)">
+          <div style="font-size:2rem;margin-bottom:8px">🤖</div>
+          <div style="font-size:0.88rem">Click "Check My Progress" — our AI will analyze your consistency and tell you if you're ready to level up!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUICK NAV -->
+
+    <div class="card-title" style="margin-bottom:14px">Quick Access</div>
+    <div class="quick-nav">
+      <a class="quick-card" href="today.html">
+        <div class="quick-icon">⚡</div>
+        <div class="quick-label">Today's Plan</div>
+      </a>
+      <a class="quick-card" href="chat.html">
+        <div class="quick-icon">🤖</div>
+        <div class="quick-label">Coach Chat</div>
+      </a>
+      <a class="quick-card" href="heatmap.html">
+        <div class="quick-icon">📅</div>
+        <div class="quick-label">Heatmap</div>
+      </a>
+      <a class="quick-card" href="progress.html">
+        <div class="quick-icon">📈</div>
+        <div class="quick-label">My Progress</div>
+      </a>
+    </div>
+
+    <!-- WEEKLY VIEW -->
+    <div class="card">
+      <div class="card-title">This Week</div>
+      <div class="weekly-grid" id="weekly-grid"></div>
+    </div>
+
+  </main>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/api.js"></script>
+<script>
+  const member = DB.getMember();
+  if (!member) window.location.href = 'index.html';
+
+  const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const WORKOUTS = ['Rest','Chest & Triceps','Back & Biceps','Legs & Core','Shoulders & Abs','Full Body','Arms & Core'];
+  const today = new Date();
+  const todayStr = DB.today();
+
+  // GREETING
+  const hour = today.getHours();
+  const timeLabel = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
+  document.getElementById('greeting-time').textContent = timeLabel;
+  document.getElementById('greeting-name').innerHTML = `Hey, <span>${member.name?.split(' ')[0] || 'Champion'}!</span>`;
+
+  // Motivational subs
+  const streak = DB.getStreak();
+  const subs = [
+    `You're on a ${streak} day streak — don't break it today! 💪`,
+    `Your body can do it. It's your mind you have to convince.`,
+    `Show up today. Future you will thank you.`,
+    `${streak > 0 ? `${streak} days strong.` : 'Start your streak today.'} Every rep counts.`
+  ];
+  document.getElementById('greeting-sub').textContent = subs[Math.floor(Math.random() * subs.length)];
+
+  // NAV
+  document.getElementById('nav-member-name').textContent = member.name || member.id;
+
+  // STREAK
+  document.getElementById('streak-num').textContent = streak;
+
+  // GOAL & EXP
+  document.getElementById('member-goal').textContent = member.goal || '—';
+  document.getElementById('member-exp').textContent = member.experience || '';
+
+  // TODAY FOCUS
+  const dayOfWeek = today.getDay(); // 0=Sun
+  const dayNum = dayOfWeek === 0 ? 0 : dayOfWeek;
+  const focusName = WORKOUTS[dayNum] || 'Rest';
+  document.getElementById('today-focus').textContent = focusName;
+  document.getElementById('today-day-num').textContent = `Day ${dayNum} of the week`;
+
+  // DATE
+  document.getElementById('today-date').textContent = today.toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' });
+  document.getElementById('today-weekday').textContent = DAYS[today.getDay()];
+
+  // WEEK DONE
+  let weekDone = 0;
+  for (let i = 1; i <= 6; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - today.getDay() + i);
+    const ds = d.toISOString().split('T')[0];
+    const log = DB.getDailyLog(ds);
+    if (log && log.completed) weekDone++;
+  }
+  document.getElementById('week-done').textContent = `${weekDone}/6`;
+
+  // WATER
+  function renderWater() {
+    const ml = DB.getWater(todayStr);
+    document.getElementById('water-ml').textContent = ml;
+    const pct = Math.min((ml / 3000) * 100, 100);
+    document.getElementById('water-bar').style.width = pct + '%';
+  }
+  function addWater(amt) {
+    const cur = DB.getWater(todayStr);
+    DB.setWater(todayStr, Math.max(0, cur + amt));
+    renderWater();
+  }
+  function resetWater() { DB.setWater(todayStr, 0); renderWater(); }
+  renderWater();
+
+  // WEEKLY GRID
+  const grid = document.getElementById('weekly-grid');
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - today.getDay() + i);
+    const ds = d.toISOString().split('T')[0];
+    const log = DB.getDailyLog(ds);
+    const isToday = ds === todayStr;
+    const isPast = d < today && !isToday;
+    const isSun = d.getDay() === 0;
+
+    const div = document.createElement('div');
+    div.className = 'week-day';
+
+    let dotClass = 'week-day-dot';
+    let label = isSun ? '😴' : (log && log.completed ? '✓' : d.getDay().toString());
+    if (isSun) dotClass += ' rest';
+    else if (log && log.completed) dotClass += ' done';
+    else if (isToday) dotClass += ' today';
+
+    div.innerHTML = `
+      <div class="week-day-label">${DAYS[d.getDay()]}</div>
+      <div class="${dotClass}">${label}</div>
+    `;
+    grid.appendChild(div);
+  }
+
+  // ── QUOTES ──
+  const QUOTES = [
+    { text: "The only bad workout is the one that didn't happen.", author: "— Unknown" },
+    { text: "Success isn't always about greatness. It's about consistency.", author: "— Dwayne Johnson" },
+    { text: "Take care of your body. It's the only place you have to live.", author: "— Jim Rohn" },
+    { text: "The pain you feel today will be the strength you feel tomorrow.", author: "— Arnold Schwarzenegger" },
+    { text: "Don't limit your challenges. Challenge your limits.", author: "— Jerry Dunn" },
+    { text: "Strength does not come from the body. It comes from the will of the soul.", author: "— Mahatma Gandhi" },
+    { text: "Your body can stand almost anything. It's your mind that you have to convince.", author: "— Unknown" },
+    { text: "Train insane or remain the same.", author: "— Jillian Michaels" },
+    { text: "The hardest lift of all is lifting your butt off the couch.", author: "— Unknown" },
+    { text: "Sweat is just fat crying.", author: "— Unknown" },
+    { text: "You don't have to be great to start, but you have to start to be great.", author: "— Zig Ziglar" },
+    { text: "One rep at a time. One day at a time. One goal at a time.", author: "— Unknown" },
+    { text: "Fitness is not about being better than someone else. It's about being better than you used to be.", author: "— Unknown" },
+    { text: "The body achieves what the mind believes.", author: "— Napoleon Hill" }
+  ];
+
+  function renderQuote() {
+    const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
+    const quote = QUOTES[dayOfYear % QUOTES.length];
+    document.getElementById('quote-text').textContent = quote.text;
+    document.getElementById('quote-author').textContent = quote.author;
+  }
+
+  // ── BMI ──
+  function renderBMI() {
+    const weight = member.weight;
+    const heightCm = member.height;
+    if (!weight || !heightCm) return;
+
+    const heightM = heightCm / 100;
+    const bmi = (weight / (heightM * heightM)).toFixed(1);
+
+    let category, colorClass, pointer;
+    if (bmi < 18.5) { category = 'Underweight'; colorClass = 'bmi-underweight'; pointer = ((bmi - 16) / 24) * 100; }
+    else if (bmi < 25) { category = 'Normal Weight'; colorClass = 'bmi-normal'; pointer = ((bmi - 16) / 24) * 100; }
+    else if (bmi < 30) { category = 'Overweight'; colorClass = 'bmi-overweight'; pointer = ((bmi - 16) / 24) * 100; }
+    else { category = 'Obese'; colorClass = 'bmi-obese'; pointer = Math.min(((bmi - 16) / 24) * 100, 95); }
+
+    const colors = { 'bmi-underweight': '#60b4ff', 'bmi-normal': '#00ff87', 'bmi-overweight': '#ffb830', 'bmi-obese': '#ff4f6a' };
+
+    document.getElementById('bmi-value').textContent = bmi;
+    document.getElementById('bmi-value').style.color = colors[colorClass];
+    const cat = document.getElementById('bmi-category');
+    cat.textContent = category;
+    cat.className = `bmi-category ${colorClass}`;
+    document.getElementById('bmi-pointer').style.left = Math.max(2, Math.min(pointer, 95)) + '%';
+    document.getElementById('bmi-weight').textContent = weight + ' kg';
+    document.getElementById('bmi-height').textContent = heightCm + ' cm';
+  }
+
+  // ── CALORIE TRACKER ──
+  const MEALS = [
+    { id: 'breakfast', name: 'Breakfast', icon: '🌅', default: 500 },
+    { id: 'midmorning', name: 'Mid-Morning', icon: '🍎', default: 200 },
+    { id: 'lunch', name: 'Lunch', icon: '🍱', default: 700 },
+    { id: 'evening', name: 'Evening', icon: '🥜', default: 250 },
+    { id: 'dinner', name: 'Dinner', icon: '🍽️', default: 600 }
+  ];
+
+  const CAL_GOAL = 2500;
+  document.getElementById('cal-goal-text').textContent = CAL_GOAL;
+
+  function getCalories() { return DB.getCalories(todayStr); }
+  function saveCalories(data) { DB.setCalories(todayStr, data); }
+
+  function renderCalories() {
+    const data = getCalories();
+    const mealsEl = document.getElementById('calorie-meals');
+
+    mealsEl.innerHTML = MEALS.map(meal => {
+      const val = data[meal.id] || '';
+      const isLogged = val > 0;
+      return `
+        <div class="meal-item ${isLogged ? 'logged' : ''}" id="meal-${meal.id}">
+          <div class="meal-icon">${meal.icon}</div>
+          <div class="meal-name">${meal.name}</div>
+          <div class="meal-cal" id="cal-${meal.id}">${val ? val + ' kcal' : '—'}</div>
+          <input class="meal-input" type="number"
+            placeholder="${meal.default}"
+            value="${val || ''}"
+            onchange="updateMeal('${meal.id}', this.value)"
+            onclick="event.stopPropagation()"
+          />
+        </div>
+      `;
+    }).join('');
+
+    updateCalTotal();
+  }
+
+  function updateMeal(mealId, value) {
+    const data = getCalories();
+    data[mealId] = parseInt(value) || 0;
+    saveCalories(data);
+    updateCalTotal();
+    const item = document.getElementById(`meal-${mealId}`);
+    const calEl = document.getElementById(`cal-${mealId}`);
+    if (item) item.classList.toggle('logged', data[mealId] > 0);
+    if (calEl) calEl.textContent = data[mealId] > 0 ? data[mealId] + ' kcal' : '—';
+  }
+
+  function updateCalTotal() {
+    const data = getCalories();
+    const total = Object.values(data).reduce((a, b) => a + (b || 0), 0);
+    const pct = Math.min((total / CAL_GOAL) * 100, 100);
+    document.getElementById('cal-total').textContent = total;
+    document.getElementById('cal-bar').style.width = pct + '%';
+    if (pct > 100) document.getElementById('cal-bar').style.background = 'var(--red)';
+  }
+
+  let aiEstimatedCals = 0;
+
+  async function analyzeFood() {
+    const input = document.getElementById('ai-food-input');
+    const food = input.value.trim();
+    if (!food) return;
+
+    const btn = document.getElementById('ai-food-btn');
+    btn.innerHTML = '<span class="spinner"></span>';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch('http://127.0.0.1:8000/calculate-calories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ food_description: food })
+      });
+      const data = await res.json();
+
+      aiEstimatedCals = data.total || 0;
+
+      // show meal type suggestion
+      const mealSel = document.getElementById('ai-meal-select');
+      if (data.meal_type) mealSel.value = data.meal_type;
+
+      // show items
+      const itemsEl = document.getElementById('ai-items');
+      itemsEl.innerHTML = (data.items || []).map(item => `
+        <div style="display:flex;justify-content:space-between;font-size:0.85rem">
+          <span style="color:var(--text-secondary)">${item.name}</span>
+          <span style="color:var(--amber);font-weight:600">${item.calories} kcal</span>
+        </div>
+      `).join('');
+
+      document.getElementById('ai-total').textContent = aiEstimatedCals + ' kcal';
+      document.getElementById('ai-food-result').style.display = 'block';
+      input.value = '';
+
+    } catch {
+      alert('Could not calculate calories. Make sure backend is running.');
+    } finally {
+      btn.innerHTML = '🤖 Calculate';
+      btn.disabled = false;
+    }
+  }
+
+  function addAICalories() {
+    const mealId = document.getElementById('ai-meal-select').value;
+    const data = getCalories();
+    data[mealId] = (data[mealId] || 0) + aiEstimatedCals;
+    saveCalories(data);
+    document.getElementById('ai-food-result').style.display = 'none';
+    renderCalories();
+  }
+
+  renderQuote();
+  renderBMI();
+  renderCalories();
+
+// pre-fill update form with current values
+  document.getElementById('update-weight').value = member.weight || '';
+  document.getElementById('update-height').value = member.height || '';
+  if (member.goal) document.getElementById('update-goal').value = member.goal;
+
+  async function updateStats() {
+    const weight = parseFloat(document.getElementById('update-weight').value);
+    const height = parseFloat(document.getElementById('update-height').value);
+    const goal = document.getElementById('update-goal').value;
+    const alertEl = document.getElementById('update-alert');
+
+    if (!weight || !height) {
+      alertEl.innerHTML = '<div class="alert alert-error">⚠ Enter both weight and height.</div>';
+      return;
+    }
+
+    try {
+      // update backend
+      await fetch(`http://127.0.0.1:8000/member/${member.member_id || member.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ weight, height, goal })
+      });
+
+      // update localStorage
+      const updated = { ...member, weight, height, goal };
+      DB.setMember(updated);
+
+      alertEl.innerHTML = '<div class="alert alert-success">✅ Stats updated! BMI recalculated.</div>';
+      setTimeout(() => alertEl.innerHTML = '', 2500);
+
+      // recalculate BMI
+      member.weight = weight;
+      member.height = height;
+      member.goal = goal;
+      renderBMI();
+
+      // update goal display
+      document.getElementById('member-goal').textContent = goal;
+
+    } catch {
+      alertEl.innerHTML = '<div class="alert alert-error">⚠ Could not update. Check backend.</div>';
+    }
+  }
+
+  async function runAdaptiveCoaching() {
+    const btn = document.getElementById('adaptive-btn');
+    const result = document.getElementById('adaptive-result');
+    btn.innerHTML = '<span class="spinner"></span> Analyzing...';
+    btn.disabled = true;
+
+    try {
+      console.log("Member data:", member);
+      console.log("Member ID:", member.member_id || member.id);
+      const res = await fetch(`http://127.0.0.1:8000/adaptive-coaching/${member.member_id || member.id}`);
+      const data = await res.json();
+
+      const isUpgrade = data.should_upgrade;
+      const rateColor = data.checkin_rate > 60 ? 'var(--green-400)' : data.checkin_rate > 40 ? 'var(--amber)' : 'var(--red)';
+
+      result.innerHTML = `
+        ${isUpgrade ? `
+        <div style="background:linear-gradient(135deg,rgba(0,255,135,0.1),rgba(0,255,135,0.05));border:1px solid var(--border-hover);border-radius:var(--radius);padding:20px;margin-bottom:16px;text-align:center">
+          <div style="font-size:2.5rem;margin-bottom:8px">🎉</div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:1.2rem;font-weight:700;color:var(--green-400);margin-bottom:6px">Level Up! ${data.current_experience} → ${data.new_experience}</div>
+          <div style="font-size:0.88rem;color:var(--text-secondary)">${data.motivation_message}</div>
+        </div>` : `
+        <div style="background:var(--navy-800);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px">
+          <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.7">${data.motivation_message}</div>
+        </div>`}
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+          <div style="background:var(--navy-800);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;text-align:center">
+            <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Checkin Rate</div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:1.8rem;font-weight:700;color:${rateColor}">${data.checkin_rate}%</div>
+          </div>
+          <div style="background:var(--navy-800);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;text-align:center">
+            <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Current Level</div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:1.8rem;font-weight:700;color:var(--green-400);text-transform:capitalize">${data.new_experience}</div>
+          </div>
+        </div>
+
+        ${data.improvement_tips && data.improvement_tips.length ? `
+        <div style="margin-bottom:14px">
+          <div style="font-size:0.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">
+            ${isUpgrade ? '🚀 What changes at your new level:' : '💡 Tips to improve:'}
+          </div>
+          ${data.improvement_tips.map(tip => `
+            <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)">
+              <span style="color:var(--green-400);flex-shrink:0">→</span>
+              <span style="font-size:0.86rem;color:var(--text-secondary)">${tip}</span>
+            </div>
+          `).join('')}
+        </div>` : ''}
+
+        ${data.challenge ? `
+        <div style="background:var(--green-glow);border:1px solid var(--border-hover);border-radius:var(--radius-sm);padding:14px">
+          <div style="font-size:0.72rem;font-weight:700;color:var(--green-400);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">🎯 Your Challenge</div>
+          <div style="font-size:0.88rem;color:var(--text-primary)">${data.challenge}</div>
+        </div>` : ''}
+      `;
+
+      // update member level in localStorage if upgraded
+      if (isUpgrade && data.new_experience !== member.experience) {
+        member.experience = data.new_experience;
+        DB.setMember(member);
+        document.getElementById('member-exp').textContent = data.new_experience;
+      }
+
+    } catch(e) {
+      result.innerHTML = '<div class="alert alert-error">⚠ Could not run assessment. Make sure backend is running.</div>';
+    } finally {
+      btn.innerHTML = 'Check My Progress';
+      btn.disabled = false;
+    }
+  }
+
+  function logout() {
+    DB.clearMember();
+    window.location.href = 'index.html';
+  }
+
+  // STREAK CHECK — reset if missed a day
+  const lastActive = DB.getLastActive();
+  if (lastActive) {
+    const last = new Date(lastActive);
+    const diff = Math.floor((today - last) / (1000 * 60 * 60 * 24));
+    if (diff > 1) { DB.setStreak(0); document.getElementById('streak-num').textContent = '0'; }
+  }
+</script>
+</body>
+</html>

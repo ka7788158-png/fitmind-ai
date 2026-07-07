@@ -1,0 +1,17 @@
+fastapi 
+uvicorn 
+langchain 
+langchain-google-genai 
+langchain-community 
+chromadb 
+sentence-transformers 
+pypdf 
+streamlit 
+python-dotenv
+langchain-huggingface
+langchain-groq
+sqlalchemy 
+passlib 
+python-jose[cryptography]
+langgraph
+langchain-mistralai

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Activity Heatmap — FitMind AI</title>
+<link rel="stylesheet" href="css/style.css"/>
+<style>
+  .heatmap-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 28px;
+    margin-bottom: 24px; overflow-x: auto;
+  }
+  .heatmap-top {
+    display: flex; justify-content: space-between;
+    align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+  }
+  .heatmap-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; font-weight: 700; }
+  .legend {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 0.72rem; color: var(--text-muted);
+  }
+  .legend-box {
+    width: 14px; height: 14px; border-radius: 3px;
+  }
+
+  .heatmap-wrap { min-width: 700px; }
+
+  /* MONTH ROW */
+  .month-row {
+    display: flex; margin-left: 36px; margin-bottom: 4px;
+  }
+  .month-cell {
+    font-size: 0.7rem; color: var(--text-secondary);
+    font-weight: 600; text-align: left;
+    flex-shrink: 0;
+  }
+
+  /* GRID BODY */
+  .grid-body { display: flex; gap: 0; }
+  .weekday-col {
+    display: flex; flex-direction: column;
+    gap: 3px; margin-right: 6px; padding-top: 1px;
+    width: 30px; flex-shrink: 0;
+  }
+  .weekday-label {
+    height: 16px; line-height: 16px;
+    font-size: 0.62rem; color: var(--text-muted);
+    text-align: right; padding-right: 6px;
+  }
+
+  .week-col { display: flex; flex-direction: column; gap: 3px; }
+  .weeks-area { display: flex; gap: 3px; }
+
+  .hm-cell {
+    width: 16px; height: 16px; border-radius: 3px;
+    flex-shrink: 0; cursor: pointer;
+    transition: transform 0.12s;
+    background: #162032;
+    border: none;
+  }
+  .hm-cell:hover { transform: scale(1.5); z-index: 20; position: relative; }
+  .hm-cell.empty { background: transparent; border-color: transparent; cursor: default; }
+  .hm-cell.empty:hover { transform: none; }
+  .hm-cell.future { background: transparent; border-color: transparent; cursor: default; }
+  .hm-cell.future:hover { transform: none; }
+  .hm-cell.rest { background: #0e1824; cursor: default; }
+  .hm-cell.rest:hover { transform: none; }
+  .hm-cell.l1 { background: #0d4429; }
+  .hm-cell.l2 { background: #196e3a; }
+  .hm-cell.l3 { background: #26a641; }
+  .hm-cell.l4 { background: #39d353; box-shadow: 0 0 6px rgba(57,211,83,0.5); }
+  .hm-cell.is-today { outline: 2px solid #00ff87; outline-offset: 1px; }
+
+  /* TOOLTIP */
+  .tt {
+    position: fixed; z-index: 999; pointer-events: none;
+    background: #1a2d4a; border: 1px solid rgba(0,255,135,0.3);
+    border-radius: 8px; padding: 8px 12px;
+    font-size: 0.78rem; display: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    min-width: 150px;
+  }
+  .tt.show { display: block; }
+  .tt-date { font-weight: 700; color: #eaf2ff; margin-bottom: 3px; font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; }
+  .tt-info { color: #7a9bbf; font-size: 0.75rem; }
+
+  /* STATS */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 14px; margin-bottom: 24px;
+  }
+
+  /* MONTHLY */
+  .monthly-row {
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    gap: 10px; margin-top: 14px;
+  }
+  .m-block {
+    background: var(--navy-800); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 10px; text-align: center;
+  }
+  .m-block-name { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 6px; }
+  .m-block-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem; font-weight: 700; color: var(--green-400);
+    line-height: 1;
+  }
+  .m-block-label { font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; }
+
+  /* RECENT */
+  .recent-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  .recent-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 16px; border-radius: 9px;
+    background: var(--navy-800); border: 1px solid var(--border);
+  }
+  .r-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .r-dot.done { background: var(--green-400); }
+  .r-dot.miss { background: var(--navy-500); }
+  .r-dot.rest { background: var(--navy-600); }
+  .r-date { font-size: 0.85rem; font-weight: 500; flex: 1; }
+  .r-status { font-size: 0.78rem; }
+  .r-status.done { color: var(--green-400); }
+  .r-status.miss { color: var(--text-muted); }
+  .r-status.rest { color: var(--text-muted); }
+
+  @media (max-width: 900px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .monthly-row { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">Fit<span>Mind</span> AI</div>
+  <div class="nav-right">
+    <span class="nav-member-badge" id="nav-name"></span>
+    <button class="nav-link" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-label">Main</div>
+    <a class="sidebar-link" href="dashboard.html"><span class="sidebar-icon">🏠</span> Dashboard</a>
+    <a class="sidebar-link" href="today.html"><span class="sidebar-icon">⚡</span> Today's Plan</a>
+    <a class="sidebar-link" href="chat.html"><span class="sidebar-icon">🤖</span> Coach Chat</a>
+    <div class="sidebar-label">Progress</div>
+    <a class="sidebar-link active" href="heatmap.html"><span class="sidebar-icon">📅</span> Heatmap</a>
+    <a class="sidebar-link" href="progress.html"><span class="sidebar-icon">📈</span> My Progress</a>
+  </aside>
+
+  <main class="content">
+    <div class="page-header">
+      <div class="page-title">Activity Heatmap</div>
+      <div class="page-sub">Your gym consistency over the last year</div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value" id="s-total">0</div>
+        <div class="stat-label">Total Workouts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="s-streak">0</div>
+        <div class="stat-label">Current Streak 🔥</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="s-best">0</div>
+        <div class="stat-label">Best Streak</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="s-month">0</div>
+        <div class="stat-label">This Month</div>
+      </div>
+    </div>
+
+    <!-- HEATMAP -->
+    <div class="heatmap-card">
+      <div class="heatmap-top">
+        <div class="heatmap-title">📅 Workout Activity — Last 12 Months</div>
+        <div class="legend">
+          <span>Less</span>
+          <div class="legend-box" style="background:#1a2640"></div>
+          <div class="legend-box" style="background:#0d3d24"></div>
+          <div class="legend-box" style="background:#145e35"></div>
+          <div class="legend-box" style="background:#1a9e52"></div>
+          <div class="legend-box" style="background:#00ff87"></div>
+          <span>More</span>
+        </div>
+      </div>
+      <div class="heatmap-wrap">
+        <div class="month-row" id="month-row"></div>
+        <div class="grid-body">
+          <div class="weekday-col">
+            <div class="weekday-label"></div>
+            <div class="weekday-label">Mon</div>
+            <div class="weekday-label"></div>
+            <div class="weekday-label">Wed</div>
+            <div class="weekday-label"></div>
+            <div class="weekday-label">Fri</div>
+            <div class="weekday-label"></div>
+          </div>
+          <div class="weeks-area" id="weeks-area"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MONTHLY -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title">Monthly Breakdown</div>
+      <div class="monthly-row" id="monthly-row"></div>
+    </div>
+
+    <!-- RECENT -->
+    <div class="card">
+      <div class="card-title">Recent Activity (Last 14 Days)</div>
+      <div class="recent-list" id="recent-list"></div>
+    </div>
+
+  </main>
+</div>
+
+<div class="tt" id="tt">
+  <div class="tt-date" id="tt-date"></div>
+  <div class="tt-info" id="tt-info"></div>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/api.js"></script>
+<script>
+const member = DB.getMember();
+if (!member) window.location.href = 'index.html';
+document.getElementById('nav-name').textContent = member.name || member.id;
+
+const todayStr = DB.today();
+const today = new Date();
+today.setHours(0,0,0,0);
+const heatmapData = DB.getHeatmap();
+
+// helper: date string from Date
+function ds(d) { return d.toISOString().split('T')[0]; }
+
+// helper: add days
+function addDays(d, n) {
+  const r = new Date(d);
+  r.setDate(r.getDate() + n);
+  return r;
+}
+
+// ── BUILD HEATMAP ──
+function buildHeatmap() {
+  const weeksArea = document.getElementById('weeks-area');
+  const monthRow = document.getElementById('month-row');
+  weeksArea.innerHTML = '';
+  monthRow.innerHTML = '';
+
+  // find start: 52 weeks ago, go back to Sunday
+  const start = new Date(today);
+  start.setDate(start.getDate() - 371); // go back ~53 weeks
+  start.setDate(start.getDate() - start.getDay()); // align to Sunday
+
+  // build all weeks
+  const CELL_W = 19; // cell width + gap
+  let col = 0;
+  let lastMonth = -1;
+  let cur = new Date(start);
+
+  while (cur <= today) {
+    // build one week column
+    const weekCol = document.createElement('div');
+    weekCol.className = 'week-col';
+
+    // check if new month starts this week
+    const midWeek = new Date(cur);
+    midWeek.setDate(midWeek.getDate() + 3);
+    const midMonth = midWeek.getMonth();
+
+    if (midMonth !== lastMonth) {
+      const mLabel = document.createElement('div');
+      mLabel.className = 'month-cell';
+      mLabel.style.width = CELL_W + 'px';
+      mLabel.textContent = midWeek.toLocaleString('default', { month: 'short' });
+      monthRow.appendChild(mLabel);
+      lastMonth = midMonth;
+    } else {
+      const spacer = document.createElement('div');
+      spacer.className = 'month-cell';
+      spacer.style.width = CELL_W + 'px';
+      monthRow.appendChild(spacer);
+    }
+
+    // 7 days in this week
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(cur);
+      date.setDate(cur.getDate() + d);
+      const dateStr = ds(date);
+      const isFuture = date > today;
+      const isToday = dateStr === todayStr;
+      const isSunday = date.getDay() === 0;
+      const log = DB.getDailyLog(dateStr);
+      const done = log && log.completed;
+      const hmLevel = heatmapData[dateStr];
+
+      const cell = document.createElement('div');
+      cell.className = 'hm-cell';
+
+      if (date < start || isFuture) {
+        cell.classList.add('future');
+      } else if (isSunday) {
+        cell.classList.add('rest');
+      } else {
+        const level = hmLevel || (done ? 4 : 0);
+        if (level === 1) cell.classList.add('l1');
+        else if (level === 2) cell.classList.add('l2');
+        else if (level === 3) cell.classList.add('l3');
+        else if (level === 4) cell.classList.add('l4');
+        if (isToday) cell.classList.add('is-today');
+      }
+
+      // tooltip
+      if (!isFuture) {
+        cell.addEventListener('mouseenter', (e) => {
+          const tt = document.getElementById('tt');
+          const log = DB.getDailyLog(dateStr);
+          const done = log && log.completed;
+          const isSun = date.getDay() === 0;
+          tt.classList.add('show');
+          document.getElementById('tt-date').textContent =
+            date.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+          document.getElementById('tt-info').textContent =
+            isToday ? '📍 Today' :
+            isSun ? '😴 Rest Day' :
+            done ? `✅ ${log.muscleGroup || 'Workout Completed'}` :
+            '— No workout logged';
+        });
+        cell.addEventListener('mousemove', (e) => {
+          const tt = document.getElementById('tt');
+          tt.style.left = (e.clientX + 16) + 'px';
+          tt.style.top = (e.clientY - 50) + 'px';
+        });
+        cell.addEventListener('mouseleave', () => {
+          document.getElementById('tt').classList.remove('show');
+        });
+      }
+
+      weekCol.appendChild(cell);
+    }
+
+    weeksArea.appendChild(weekCol);
+    cur.setDate(cur.getDate() + 7);
+    col++;
+  }
+}
+
+// ── STATS ──
+function buildStats() {
+  let total = 0, thisMonth = 0, best = 0, temp = 0;
+
+  for (let i = 364; i >= 0; i--) {
+    const d = addDays(today, -i);
+    const dateStr = ds(d);
+    const log = DB.getDailyLog(dateStr);
+    const done = log && log.completed;
+    const isSun = d.getDay() === 0;
+
+    if (done) {
+      total++;
+      temp++;
+      if (temp > best) best = temp;
+      if (d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear()) thisMonth++;
+    } else if (!isSun && dateStr !== todayStr) {
+      temp = 0;
+    }
+  }
+
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-streak').textContent = DB.getStreak();
+  document.getElementById('s-best').textContent = best;
+  document.getElementById('s-month').textContent = thisMonth;
+}
+
+// ── MONTHLY BREAKDOWN ──
+function buildMonthly() {
+  const row = document.getElementById('monthly-row');
+  row.innerHTML = '';
+
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    const monthName = d.toLocaleString('default', { month: 'short' });
+    const yr = d.getFullYear();
+    const mo = d.getMonth();
+    const days = new Date(yr, mo + 1, 0).getDate();
+
+    let count = 0;
+    for (let day = 1; day <= days; day++) {
+      const dateStr = `${yr}-${String(mo+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const log = DB.getDailyLog(dateStr);
+      if (log && log.completed) count++;
+    }
+
+    row.innerHTML += `
+      <div class="m-block">
+        <div class="m-block-name">${monthName} ${yr !== today.getFullYear() ? yr : ''}</div>
+        <div class="m-block-num">${count}</div>
+        <div class="m-block-label">workouts</div>
+      </div>
+    `;
+  }
+}
+
+// ── RECENT 14 DAYS ──
+function buildRecent() {
+  const list = document.getElementById('recent-list');
+  list.innerHTML = '';
+
+  for (let i = 0; i < 14; i++) {
+    const d = addDays(today, -i);
+    const dateStr = ds(d);
+    const isSun = d.getDay() === 0;
+    const isToday = dateStr === todayStr;
+    const log = DB.getDailyLog(dateStr);
+    const done = log && log.completed;
+
+    const dotClass = isSun ? 'rest' : done ? 'done' : 'miss';
+    const statusClass = isSun ? 'rest' : done ? 'done' : 'miss';
+    const statusText = isSun ? '😴 Rest Day' :
+      done ? `✅ ${log.muscleGroup || 'Completed'}` :
+      isToday ? '⏳ Today — pending' : '— Missed';
+
+    list.innerHTML += `
+      <div class="recent-item">
+        <div class="r-dot ${dotClass}"></div>
+        <div class="r-date">${d.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'short' })}${isToday ? ' (Today)' : ''}</div>
+        <div class="r-status ${statusClass}">${statusText}</div>
+      </div>
+    `;
+  }
+}
+
+buildHeatmap();
+buildStats();
+buildMonthly();
+buildRecent();
+
+function logout() { DB.clearMember(); window.location.href = 'index.html'; }
+</script>
+</body>
+</html>

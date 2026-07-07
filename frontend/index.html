@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FitMind AI — Gym Coaching Platform</title>
+<link rel="stylesheet" href="css/style.css"/>
+<style>
+  body { overflow-x: hidden; }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 40px 24px;
+    position: relative;
+  }
+  .hero-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,255,135,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 80% 80%, rgba(0,255,135,0.04) 0%, transparent 60%);
+  }
+  .hero-content { position: relative; z-index: 1; max-width: 860px; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--green-400); margin-bottom: 24px;
+    background: var(--green-glow); border: 1px solid var(--border-hover);
+    padding: 6px 16px; border-radius: 20px;
+  }
+  .eyebrow-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green-400);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  .hero-title {
+    font-size: clamp(2.6rem, 6.5vw, 4.8rem);
+    font-weight: 700; line-height: 1.08;
+    letter-spacing: -0.04em; margin-bottom: 22px;
+  }
+  .hero-title .line2 { color: var(--green-400); }
+
+  .hero-sub {
+    font-size: 1.05rem; color: var(--text-secondary);
+    max-width: 540px; margin: 0 auto 44px;
+    line-height: 1.75;
+  }
+
+  .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 72px; }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: flex; gap: 0;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    max-width: 600px; margin: 0 auto;
+  }
+  .stat-item {
+    flex: 1; padding: 20px 16px; text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.6rem; font-weight: 700; color: var(--green-400);
+  }
+  .stat-lbl { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; }
+
+  /* LOGIN SECTION */
+  .login-section {
+    min-height: 100vh; display: flex;
+    align-items: center; justify-content: center;
+    padding: 80px 24px;
+    background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(0,255,135,0.04) 0%, transparent 70%);
+  }
+  .login-box { width: 100%; max-width: 440px; }
+  .login-header { text-align: center; margin-bottom: 32px; }
+  .login-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 8px; }
+  .login-sub { color: var(--text-secondary); font-size: 0.92rem; }
+
+  .login-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 32px;
+    backdrop-filter: blur(12px);
+  }
+
+  .tab-switcher {
+    display: grid; grid-template-columns: 1fr 1fr;
+    background: var(--navy-900); border-radius: var(--radius-sm);
+    padding: 4px; margin-bottom: 28px;
+    border: 1px solid var(--border);
+  }
+  .tab-btn {
+    padding: 10px; border-radius: 6px;
+    font-size: 0.85rem; font-weight: 600;
+    border: none; background: none;
+    color: var(--text-muted); cursor: pointer;
+    transition: all 0.2s; font-family: 'Space Grotesk', sans-serif;
+  }
+  .tab-btn.active {
+    background: var(--navy-700); color: var(--green-400);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* FEATURES */
+  .features {
+    padding: 100px 24px; max-width: 1100px; margin: 0 auto;
+  }
+  .section-eyebrow {
+    font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--green-400); margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: 2.2rem; font-weight: 700;
+    letter-spacing: -0.03em; margin-bottom: 12px;
+  }
+  .section-sub {
+    color: var(--text-secondary); max-width: 480px; margin-bottom: 52px;
+  }
+  .features-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .feature-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 28px;
+    transition: all 0.25s;
+  }
+  .feature-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-green);
+  }
+  .feature-icon {
+    font-size: 1.8rem; margin-bottom: 16px;
+    display: block;
+  }
+  .feature-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem; font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .feature-desc { font-size: 0.87rem; color: var(--text-secondary); line-height: 1.65; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px; text-align: center;
+    color: var(--text-muted); font-size: 0.82rem;
+  }
+  footer span { color: var(--green-400); }
+
+  /* ALERT */
+  #login-alert, #register-alert { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">Fit<span>Mind</span> AI</div>
+  <div class="nav-right">
+    <a class="nav-link" href="#login-section">Member Login</a>
+    <a class="nav-link" href="owner.html">Gym Owner</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <div class="eyebrow"><div class="eyebrow-dot"></div>AI-Powered Gym Coaching</div>
+    <h1 class="hero-title">
+      Your gym. Smarter.<br/>
+      <span class="line2">Every single day.</span>
+    </h1>
+    <p class="hero-sub">
+      FitMind AI gives every gym member a personal coach —
+      daily workout plans, food timelines, progress tracking,
+      and an AI that actually listens.
+    </p>
+    <div class="hero-actions">
+      <button class="btn btn-primary btn-lg" onclick="document.getElementById('login-section').scrollIntoView({behavior:'smooth'})">
+        Get Started →
+      </button>
+      <a href="owner.html" class="btn btn-secondary btn-lg">Gym Owner Login</a>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-num">Daily</div>
+        <div class="stat-lbl">Personalized Plans</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">RAG</div>
+        <div class="stat-lbl">Science-Backed</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">24/7</div>
+        <div class="stat-lbl">AI Coach</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">🔥</div>
+        <div class="stat-lbl">Streak Tracking</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features">
+  <div class="section-eyebrow">Everything you need</div>
+  <h2 class="section-title">Built for real gym members</h2>
+  <p class="section-sub">Not a generic fitness app. A daily coach that knows you, tracks you, and pushes you.</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <span class="feature-icon">🏋️</span>
+      <div class="feature-title">Daily Workout Plans</div>
+      <div class="feature-desc">Come daily and get a specific plan for today — chest day, leg day, rest day — with exact sets, reps, and tips.</div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🥗</span>
+      <div class="feature-title">Food Timeline</div>
+      <div class="feature-desc">Know what to eat and when — from pre-workout breakfast to post-workout dinner, timed to your gym session.</div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">✅</span>
+      <div class="feature-title">Exercise Checklist</div>
+      <div class="feature-desc">Tick off each exercise as you complete it. See your progress fill up in real time during the workout.</div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">📅</span>
+      <div class="feature-title">Activity Heatmap</div>
+      <div class="feature-desc">Your consistency visualized — just like GitHub. Green days mean you showed up. Build the streak.</div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🔥</span>
+      <div class="feature-title">Streak Counter</div>
+      <div class="feature-desc">Never break the chain. Your streak resets if you skip — the most powerful motivation tool there is.</div>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🤖</span>
+      <div class="feature-title">Plan Modification AI</div>
+      <div class="feature-desc">Don't like an exercise? Have an injury? Ask the AI to modify your plan instantly — it adapts to you.</div>
+    </div>
+  </div>
+</section>
+
+<!-- LOGIN -->
+<section class="login-section" id="login-section">
+  <div class="login-box">
+    <div class="login-header">
+      <h2 class="login-title">Welcome back</h2>
+      <p class="login-sub">Login with your Member ID or register as a new member</p>
+    </div>
+
+    <div class="login-card">
+      <div class="tab-switcher">
+        <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+        <button class="tab-btn" onclick="switchTab('register')">Register</button>
+      </div>
+
+      <!-- LOGIN TAB -->
+      <div class="tab-panel active" id="tab-login">
+        <div id="login-alert"></div>
+        <div class="form-group">
+          <label class="form-label">Member ID</label>
+          <input class="form-input" type="text" id="login-id" placeholder="e.g. MEM001" onkeydown="if(event.key==='Enter') doLogin()"/>
+        </div>
+        <button class="btn btn-primary btn-full" id="login-btn" onclick="doLogin()">Login →</button>
+        <p style="text-align:center;margin-top:16px;font-size:0.82rem;color:var(--text-muted)">
+          Don't have an ID? Switch to Register above.
+        </p>
+      </div>
+
+      <!-- REGISTER TAB -->
+      <div class="tab-panel" id="tab-register">
+        <div id="register-alert"></div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input class="form-input" type="text" id="r-name" placeholder="Rahul Sharma"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Member ID</label>
+            <input class="form-input" type="text" id="r-id" placeholder="MEM001"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Age</label>
+            <input class="form-input" type="number" id="r-age" placeholder="20" min="10" max="80"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Weight (kg)</label>
+            <input class="form-input" type="number" id="r-weight" placeholder="70"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Height (cm)</label>
+            <input class="form-input" type="number" id="r-height" placeholder="175"/>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Gender</label>
+            <select class="form-input" id="r-gender">
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Experience</label>
+            <select class="form-input" id="r-exp">
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Goal</label>
+            <select class="form-input" id="r-goal">
+              <option value="muscle gain">Muscle Gain</option>
+              <option value="weight loss">Weight Loss</option>
+              <option value="maintain fitness">Maintain Fitness</option>
+              <option value="improve stamina">Improve Stamina</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Diet Type</label>
+            <select class="form-input" id="r-diet">
+              <option value="vegetarian">Vegetarian</option>
+              <option value="non-vegetarian">Non-Vegetarian</option>
+              <option value="vegan">Vegan</option>
+            </select>
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Injuries / Limitations</label>
+            <input class="form-input" type="text" id="r-injuries" placeholder="e.g. knee pain — or leave blank"/>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" id="register-btn" onclick="doRegister()">Create Account →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Built with ❤️ by <span>FitMind AI</span> — Powered by Gemini + LangChain
+</footer>
+
+<script src="js/storage.js"></script>
+<script src="js/api.js"></script>
+<script>
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (tab==='login'&&i===0)||(tab==='register'&&i===1)));
+    document.getElementById('tab-login').classList.toggle('active', tab==='login');
+    document.getElementById('tab-register').classList.toggle('active', tab==='register');
+  }
+
+  async function doLogin() {
+    const id = document.getElementById('login-id').value.trim();
+    const alertEl = document.getElementById('login-alert');
+    if (!id) { alertEl.innerHTML = '<div class="alert alert-error">⚠ Enter your Member ID.</div>'; return; }
+
+    const btn = document.getElementById('login-btn');
+    btn.innerHTML = '<span class="spinner"></span> Logging in...';
+    btn.disabled = true;
+    alertEl.innerHTML = '';
+
+    try {
+      const data = await API.getMember(id);
+      if (data.error) {
+        alertEl.innerHTML = '<div class="alert alert-error">⚠ Member ID not found. Please contact your gym owner.</div>';
+      } else if (!data.is_premium) {
+        alertEl.innerHTML = '<div class="alert alert-error">⚠ Your account is not activated. Please contact your gym owner to activate premium access.</div>';
+      } else {
+        DB.setMember({ id, ...data.profile, plan: data.plan });
+        window.location.href = 'dashboard.html';
+      }
+
+    } catch {
+      alertEl.innerHTML = '<div class="alert alert-error">⚠ Cannot reach server. Make sure backend is running.</div>';
+    } finally {
+      btn.innerHTML = 'Login →'; btn.disabled = false;
+    }
+  }
+
+  async function doRegister() {
+    const name = document.getElementById('r-name').value.trim();
+    const id = document.getElementById('r-id').value.trim();
+    const age = document.getElementById('r-age').value;
+    const weight = document.getElementById('r-weight').value;
+    const height = document.getElementById('r-height').value;
+    const exp = document.getElementById('r-exp').value;
+    const goal = document.getElementById('r-goal').value;
+    const diet = document.getElementById('r-diet').value;
+    const injuries = document.getElementById('r-injuries').value.trim() || 'None';
+    const alertEl = document.getElementById('register-alert');
+
+    if (!name||!id||!age||!weight||!height) {
+      alertEl.innerHTML = '<div class="alert alert-error">⚠ Please fill all required fields.</div>'; return;
+    }
+
+    const btn = document.getElementById('register-btn');
+    btn.innerHTML = '<span class="spinner"></span> Creating account...';
+    btn.disabled = true; alertEl.innerHTML = '';
+
+    try {
+      const gender = document.getElementById('r-gender').value;
+      const profile = { member_id: id, name, age: parseInt(age), weight: parseFloat(weight), height: parseFloat(height), goal, diet_type: diet, injuries, experience: exp, gender };      const data = await API.generatePlan(profile);
+      DB.setMember({ id, ...profile, plan: data.plan });
+      window.location.href = 'dashboard.html';
+    } catch {
+      alertEl.innerHTML = '<div class="alert alert-error">⚠ Registration failed. Check backend connection.</div>';
+    } finally {
+      btn.innerHTML = 'Create Account →'; btn.disabled = false;
+    }
+  }
+
+  // redirect if already logged in
+  if (DB.getMember()) window.location.href = 'dashboard.html';
+</script>
+</body>
+</html>

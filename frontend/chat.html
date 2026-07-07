@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Coach Chat — FitMind AI</title>
+<link rel="stylesheet" href="css/style.css"/>
+<style>
+  .chat-layout {
+    display: flex; gap: 20px; height: calc(100vh - 64px - 72px);
+  }
+  .chat-main {
+    flex: 1; display: flex; flex-direction: column;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); overflow: hidden;
+  }
+  .chat-topbar {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .coach-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--green-glow); border: 2px solid var(--green-400);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+  }
+  .coach-info { flex: 1; }
+  .coach-name { font-weight: 700; font-size: 0.95rem; font-family: 'Space Grotesk', sans-serif; }
+  .coach-status { font-size: 0.75rem; color: var(--green-400); display: flex; align-items: center; gap: 5px; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-400); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .chat-messages {
+    flex: 1; overflow-y: auto; padding: 20px;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .chat-input-area {
+    padding: 16px; border-top: 1px solid var(--border);
+    display: flex; gap: 10px; align-items: flex-end;
+  }
+  .chat-input-area textarea {
+    flex: 1; background: var(--navy-800);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 11px 14px; color: var(--text-primary);
+    font-size: 0.92rem; font-family: 'Inter', sans-serif;
+    resize: none; outline: none; min-height: 44px; max-height: 120px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    line-height: 1.5;
+  }
+  .chat-input-area textarea:focus {
+    border-color: var(--green-400);
+    box-shadow: 0 0 0 3px var(--green-glow);
+  }
+  .chat-input-area textarea::placeholder { color: var(--text-muted); }
+
+  /* SUGGESTIONS PANEL */
+  .suggestions-panel {
+    width: 240px; flex-shrink: 0;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .suggestions-title {
+    font-size: 0.75rem; font-weight: 700;
+    color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .suggestion-chip {
+    padding: 10px 14px; border-radius: var(--radius-sm);
+    background: var(--card); border: 1px solid var(--border);
+    font-size: 0.82rem; color: var(--text-secondary);
+    cursor: pointer; transition: all 0.2s; line-height: 1.4;
+  }
+  .suggestion-chip:hover {
+    border-color: var(--border-hover);
+    color: var(--green-400); background: var(--green-glow);
+  }
+
+  .msg-time { font-size: 0.68rem; color: var(--text-muted); margin-top: 3px; }
+  .typing-indicator {
+    display: flex; align-items: center; gap: 5px; padding: 12px 15px;
+    background: var(--navy-700); border-radius: 14px;
+    border-bottom-left-radius: 4px; width: fit-content;
+    border: 1px solid var(--border);
+  }
+  .typing-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green-400); animation: typingBounce 1.2s infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingBounce {
+    0%,60%,100% { transform: translateY(0); opacity:0.4; }
+    30% { transform: translateY(-6px); opacity:1; }
+  }
+
+  @media (max-width: 768px) {
+    .suggestions-panel { display: none; }
+    .chat-layout { height: calc(100vh - 64px - 48px); }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">Fit<span>Mind</span> AI</div>
+  <div class="nav-right">
+    <span class="nav-member-badge" id="nav-name">Loading...</span>
+    <button class="nav-link" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-label">Main</div>
+    <a class="sidebar-link" href="dashboard.html"><span class="sidebar-icon">🏠</span> Dashboard</a>
+    <a class="sidebar-link" href="today.html"><span class="sidebar-icon">⚡</span> Today's Plan</a>
+    <a class="sidebar-link active" href="chat.html"><span class="sidebar-icon">🤖</span> Coach Chat</a>
+    <div class="sidebar-label">Progress</div>
+    <a class="sidebar-link" href="heatmap.html"><span class="sidebar-icon">📅</span> Heatmap</a>
+    <a class="sidebar-link" href="progress.html"><span class="sidebar-icon">📈</span> My Progress</a>
+  </aside>
+
+  <main class="content" style="padding-bottom:0">
+    <div class="page-header">
+      <div class="page-title">Coach Chat</div>
+      <div class="page-sub">Ask anything about fitness, nutrition, recovery, or your plan</div>
+    </div>
+
+    <div class="chat-layout">
+      <!-- MAIN CHAT -->
+      <div class="chat-main">
+        <div class="chat-topbar">
+          <div class="coach-avatar">🤖</div>
+          <div class="coach-info">
+            <div class="coach-name">FitMind Coach</div>
+            <div class="coach-status"><div class="status-dot"></div> Online — Ready to help</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="clearChat()">Clear Chat</button>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+          <!-- Welcome message -->
+          <div class="msg coach">
+            <div class="msg-label">🤖 Coach</div>
+            <div class="msg-bubble">
+              Hey! I'm your personal AI fitness coach. I can help you with workout advice, nutrition questions, recovery tips, or anything about your fitness journey. What's on your mind?
+            </div>
+            <div class="msg-time">Just now</div>
+          </div>
+        </div>
+
+        <div class="chat-input-area">
+          <textarea
+            id="chat-input"
+            placeholder="Ask your coach anything..."
+            rows="1"
+            onkeydown="handleKey(event)"
+            oninput="autoResize(this)"
+          ></textarea>
+          <button class="btn btn-primary" id="send-btn" onclick="sendMessage()" style="height:44px;padding:0 20px">
+            Send ↑
+          </button>
+        </div>
+      </div>
+
+      <!-- SUGGESTIONS -->
+      <div class="suggestions-panel">
+        <div class="suggestions-title">Quick Questions</div>
+        <div class="suggestion-chip" onclick="askSuggestion(this)">How much protein do I need daily?</div>
+        <div class="suggestion-chip" onclick="askSuggestion(this)">What should I eat before workout?</div>
+        <div class="suggestion-chip" onclick="askSuggestion(this)">How to reduce muscle soreness?</div>
+        <div class="suggestion-chip" onclick="askSuggestion(this)">Is it okay to skip rest day?</div>
+        <div class="suggestion-chip" onclick="askSuggestion(this)">How many calories should I eat?</div>
+        <div class="suggestion-chip" onclick="askSuggestion(this)">Best exercises for core strength?</div>
+        <div class="suggestion-chip" onclick="askSuggestion(this)">How to improve sleep for recovery?</div>
+        <div class="suggestion-chip" onclick="askSuggestion(this)">What is progressive overload?</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/api.js"></script>
+<script>
+const member = DB.getMember();
+if (!member) window.location.href = 'index.html';
+document.getElementById('nav-name').textContent = member.name || member.id;
+
+let chatHistory = [];
+
+function getTime() {
+  return new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+}
+
+function addMsg(role, text) {
+  const win = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.innerHTML = `
+    <div class="msg-label">${role === 'user' ? 'You' : '🤖 Coach'}</div>
+    <div class="msg-bubble">${text.replace(/\n/g,'<br/>')}</div>
+    <div class="msg-time">${getTime()}</div>
+  `;
+  win.appendChild(div);
+  win.scrollTop = win.scrollHeight;
+}
+
+function showTyping() {
+  const win = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg coach'; div.id = 'typing-msg';
+  div.innerHTML = `
+    <div class="msg-label">🤖 Coach</div>
+    <div class="typing-indicator">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>
+  `;
+  win.appendChild(div);
+  win.scrollTop = win.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing-msg');
+  if (t) t.remove();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const question = input.value.trim();
+  if (!question) return;
+
+  addMsg('user', question);
+  chatHistory.push({ role: 'user', content: question });
+  input.value = ''; autoResize(input);
+
+  const btn = document.getElementById('send-btn');
+  btn.disabled = true; btn.textContent = '...';
+  showTyping();
+
+  try {
+    const data = await API.chat(member.member_id || member.id, question, chatHistory);
+    removeTyping();
+    const reply = data.response || 'Sorry, could not get a response.';
+    addMsg('coach', reply);
+    chatHistory.push({ role: 'assistant', content: reply });
+  } catch {
+    removeTyping();
+    addMsg('coach', '⚠ Could not reach the server. Make sure backend is running.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Send ↑';
+  }
+}
+
+function askSuggestion(el) {
+  document.getElementById('chat-input').value = el.textContent;
+  sendMessage();
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function clearChat() {
+  chatHistory = [];
+  const win = document.getElementById('chat-messages');
+  win.innerHTML = `
+    <div class="msg coach">
+      <div class="msg-label">🤖 Coach</div>
+      <div class="msg-bubble">Chat cleared! What would you like to know?</div>
+      <div class="msg-time">${getTime()}</div>
+    </div>
+  `;
+}
+
+function logout() { DB.clearMember(); window.location.href = 'index.html'; }
+</script>
+</body>
+</html>

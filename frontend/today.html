@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Today's Plan — FitMind AI</title>
+<link rel="stylesheet" href="css/style.css"/>
+<style>
+  .checkin-banner {
+    background: linear-gradient(135deg, var(--navy-700), var(--navy-800));
+    border: 1px solid var(--border-hover);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    display: flex; align-items: center;
+    justify-content: space-between;
+    gap: 20px; flex-wrap: wrap;
+    margin-bottom: 28px; position: relative; overflow: hidden;
+  }
+  .checkin-banner::before {
+    content: '';
+    position: absolute; top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    background: radial-gradient(circle, var(--green-glow-strong), transparent 70%);
+  }
+  .checkin-left { z-index: 1; }
+  .checkin-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; }
+  .checkin-sub { color: var(--text-secondary); font-size: 0.88rem; }
+  .checkin-done {
+    background: var(--green-glow); border: 1px solid var(--border-hover);
+    border-radius: var(--radius); padding: 16px 24px;
+    color: var(--green-400); font-weight: 700;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem; text-align: center;
+  }
+
+  .day-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--green-glow); border: 1px solid var(--border-hover);
+    border-radius: 20px; padding: 6px 16px;
+    font-size: 0.78rem; font-weight: 700;
+    color: var(--green-400); margin-bottom: 16px;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+
+  .plan-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 20px; margin-bottom: 28px;
+  }
+
+  .exercise-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  .exercise-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .exercise-header-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; }
+  .exercise-progress-text { font-size: 0.8rem; color: var(--green-400); font-weight: 700; }
+  .exercise-progress-bar { height: 3px; background: var(--border); }
+  .exercise-progress-fill { height: 100%; background: var(--green-400); transition: width 0.4s ease; }
+  .checklist-wrap { padding: 16px; }
+
+  .food-timeline { padding: 4px 0; }
+
+  .modify-section {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden; margin-bottom: 28px;
+  }
+  .modify-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .modify-chat { height: 280px; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .modify-input-row { display: flex; gap: 10px; padding: 16px; border-top: 1px solid var(--border); }
+
+  .loading-plan {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 80px 24px; gap: 16px; text-align: center;
+  }
+  .loading-plan .spinner { width: 36px; height: 36px; border-width: 3px; }
+  .loading-text { color: var(--text-secondary); font-size: 0.92rem; }
+  .loading-steps { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .loading-step { font-size: 0.8rem; color: var(--text-muted); }
+  .loading-step.active { color: var(--green-400); }
+
+  .completion-banner {
+    background: linear-gradient(135deg, rgba(0,255,135,0.12), rgba(0,255,135,0.05));
+    border: 1px solid var(--border-hover);
+    border-radius: var(--radius-lg); padding: 32px;
+    text-align: center; margin-bottom: 28px;
+  }
+  .completion-icon { font-size: 3rem; margin-bottom: 12px; }
+  .completion-title { font-size: 1.4rem; font-weight: 700; color: var(--green-400); margin-bottom: 8px; }
+  .completion-sub { color: var(--text-secondary); font-size: 0.9rem; }
+
+  .rest-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 48px;
+    text-align: center;
+  }
+  .rest-icon { font-size: 4rem; margin-bottom: 16px; }
+  .rest-title { font-size: 1.6rem; font-weight: 700; margin-bottom: 8px; }
+  .rest-sub { color: var(--text-secondary); max-width: 400px; margin: 0 auto; }
+
+  @media (max-width: 768px) {
+    .plan-grid { grid-template-columns: 1fr; }
+    .checkin-banner { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">Fit<span>Mind</span> AI</div>
+  <div class="nav-right">
+    <span class="nav-member-badge" id="nav-name">Loading...</span>
+    <button class="nav-link" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-label">Main</div>
+    <a class="sidebar-link" href="dashboard.html"><span class="sidebar-icon">🏠</span> Dashboard</a>
+    <a class="sidebar-link active" href="today.html"><span class="sidebar-icon">⚡</span> Today's Plan</a>
+    <a class="sidebar-link" href="chat.html"><span class="sidebar-icon">🤖</span> Coach Chat</a>
+    <div class="sidebar-label">Progress</div>
+    <a class="sidebar-link" href="heatmap.html"><span class="sidebar-icon">📅</span> Heatmap</a>
+    <a class="sidebar-link" href="progress.html"><span class="sidebar-icon">📈</span> My Progress</a>
+  </aside>
+
+  <main class="content">
+    <div class="page-header">
+      <div class="page-title">Today's Plan</div>
+      <div class="page-sub" id="today-date-sub">Loading...</div>
+    </div>
+
+    <div id="main-content">
+      <div class="loading-plan">
+        <div class="spinner"></div>
+        <div class="loading-text">Preparing your day...</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/api.js"></script>
+<script>
+const member = DB.getMember();
+if (!member) window.location.href = 'index.html';
+
+document.getElementById('nav-name').textContent = member.name || member.id;
+
+const today = new Date();
+const todayStr = DB.today();
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MUSCLES = ['Rest','Chest & Triceps','Back & Biceps','Legs & Core','Shoulders & Abs','Full Body','Arms & Core'];
+
+const dayOfWeek = today.getDay();
+const todayName = DAYS[dayOfWeek];
+const muscleGroup = MUSCLES[dayOfWeek];
+const isRestDay = dayOfWeek === 0;
+
+document.getElementById('today-date-sub').textContent =
+  `${todayName}, ${today.toLocaleDateString('en-IN', {day:'numeric', month:'long', year:'numeric'})}`;
+
+// CHECK IF ALREADY HAS TODAY'S LOG
+const existingLog = DB.getDailyLog(todayStr);
+
+function init() {
+  if (isRestDay) { renderRestDay(); return; }
+  if (existingLog && existingLog.plan) {
+    renderFullDay(existingLog.plan, existingLog.checkedIn, existingLog.exercises, existingLog.completed);
+  } else {
+    renderCheckIn();
+  }
+}
+
+// ── REST DAY ──
+function renderRestDay() {
+  document.getElementById('main-content').innerHTML = `
+    <div class="checkin-banner">
+      <div class="checkin-left">
+        <div class="day-badge">😴 Sunday · Rest Day</div>
+        <div class="checkin-title">Your body needs recovery too! 💆</div>
+        <div class="checkin-sub">Rest days are part of the plan — but you still need to eat right.</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px">
+
+      <!-- REST DAY OPTIONS -->
+      <div class="card">
+        <div class="card-title">🏠 What do you want to do today?</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="check-item" id="opt-rest" onclick="selectRestOption('rest')" style="cursor:pointer">
+            <div class="check-box" id="box-rest"></div>
+            <div>
+              <div class="check-text" style="font-weight:600">Full Rest Day 😴</div>
+              <div style="font-size:0.78rem;color:var(--text-secondary);margin-top:2px">No exercise, focus on recovery and nutrition</div>
+            </div>
+          </div>
+          <div class="check-item" id="opt-home" onclick="selectRestOption('home')" style="cursor:pointer">
+            <div class="check-box" id="box-home"></div>
+            <div>
+              <div class="check-text" style="font-weight:600">Light Home Workout 🏠</div>
+              <div style="font-size:0.78rem;color:var(--text-secondary);margin-top:2px">Simple exercises, no equipment needed</div>
+            </div>
+          </div>
+          <div class="check-item" id="opt-stretch" onclick="selectRestOption('stretch')" style="cursor:pointer">
+            <div class="check-box" id="box-stretch"></div>
+            <div>
+              <div class="check-text" style="font-weight:600">Stretching & Mobility 🧘</div>
+              <div style="font-size:0.78rem;color:var(--text-secondary);margin-top:2px">Light stretching to reduce soreness</div>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-top:16px" id="rest-generate-btn" onclick="generateRestDayPlan()" disabled>
+          Generate Plan →
+        </button>
+      </div>
+
+      <!-- FOOD PLAN -->
+      <div class="card">
+        <div class="card-title">🥗 Today's Food Plan</div>
+        <div id="rest-food-section">
+          <div style="text-align:center;padding:32px;color:var(--text-muted)">
+            <div style="font-size:2rem;margin-bottom:8px">🍽️</div>
+            <div style="font-size:0.88rem">Loading your Sunday meal plan...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GENERATED PLAN -->
+    <div id="rest-plan-section" style="display:none">
+      <div class="exercise-card" style="margin-bottom:24px">
+        <div class="exercise-header">
+          <div class="exercise-header-title" id="rest-plan-title">Home Workout</div>
+          <div class="exercise-progress-text" id="rest-ex-progress">0/0</div>
+        </div>
+        <div class="exercise-progress-bar">
+          <div class="exercise-progress-fill" id="rest-ex-bar" style="width:0%"></div>
+        </div>
+        <div class="checklist-wrap">
+          <div class="checklist" id="rest-exercise-checklist"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIPS -->
+    <div class="card">
+      <div class="card-title">💡 Recovery Tips for Today</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
+        <div style="background:var(--navy-800);border-radius:var(--radius-sm);padding:14px;border:1px solid var(--border)">
+          <div style="font-size:1.2rem;margin-bottom:8px">💧</div>
+          <div style="font-size:0.88rem;font-weight:600;margin-bottom:4px">Stay Hydrated</div>
+          <div style="font-size:0.78rem;color:var(--text-secondary)">Drink 3-4 liters of water today to flush out toxins from yesterday's workout.</div>
+        </div>
+        <div style="background:var(--navy-800);border-radius:var(--radius-sm);padding:14px;border:1px solid var(--border)">
+          <div style="font-size:1.2rem;margin-bottom:8px">😴</div>
+          <div style="font-size:0.88rem;font-weight:600;margin-bottom:4px">Sleep 8 Hours</div>
+          <div style="font-size:0.78rem;color:var(--text-secondary)">Muscle growth happens during sleep. Aim for 7-9 hours tonight.</div>
+        </div>
+        <div style="background:var(--navy-800);border-radius:var(--radius-sm);padding:14px;border:1px solid var(--border)">
+          <div style="font-size:1.2rem;margin-bottom:8px">🥗</div>
+          <div style="font-size:0.88rem;font-weight:600;margin-bottom:4px">Eat Your Protein</div>
+          <div style="font-size:0.78rem;color:var(--text-secondary)">Don't skip meals on rest days. Your muscles are still repairing.</div>
+        </div>
+        <div style="background:var(--navy-800);border-radius:var(--radius-sm);padding:14px;border:1px solid var(--border)">
+          <div style="font-size:1.2rem;margin-bottom:8px">🚶</div>
+          <div style="font-size:0.88rem;font-weight:600;margin-bottom:4px">Light Walk</div>
+          <div style="font-size:0.78rem;color:var(--text-secondary)">A 20-30 min walk improves blood flow and speeds up recovery.</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // auto generate food plan
+  generateRestFoodPlan();
+}
+
+let selectedRestOption = null;
+let restExercises = {};
+
+function selectRestOption(option) {
+  selectedRestOption = option;
+  ['rest','home','stretch'].forEach(o => {
+    const item = document.getElementById(`opt-${o}`);
+    const box = document.getElementById(`box-${o}`);
+    if (item) { item.classList.remove('done'); box.textContent = ''; }
+  });
+  const item = document.getElementById(`opt-${option}`);
+  const box = document.getElementById(`box-${option}`);
+  if (item) { item.classList.add('done'); box.textContent = '✓'; }
+  document.getElementById('rest-generate-btn').disabled = false;
+}
+
+async function generateRestFoodPlan() {
+  const foodEl = document.getElementById('rest-food-section');
+  if (!foodEl) return;
+
+  try {
+    const data = await API.generateDailyPlan(
+      member.member_id || member.id,
+      member, 0, 'Sunday'
+    );
+
+    const parsed = parsePlan(data.plan);
+    if (parsed.food.length) {
+      foodEl.innerHTML = `<div class="food-timeline timeline">${parsed.food.map((f, i) => `
+        <div class="timeline-item">
+          <div class="timeline-left">
+            <div class="timeline-dot"></div>
+            ${i < parsed.food.length - 1 ? '<div class="timeline-line"></div>' : ''}
+          </div>
+          <div>
+            <div class="timeline-time">${f.time}</div>
+            <div class="timeline-title">${f.title}</div>
+            <div class="timeline-desc">${f.desc}</div>
+          </div>
+        </div>
+      `).join('')}</div>`;
+    } else {
+      foodEl.innerHTML = `<div class="plan-render" style="font-size:0.88rem">${renderMarkdown(data.plan)}</div>`;
+    }
+
+    // save to log
+    const log = DB.getDailyLog(todayStr) || {};
+    log.restDayPlan = data.plan;
+    DB.setDailyLog(todayStr, log);
+
+  } catch {
+    foodEl.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;text-align:center;padding:16px">Could not load food plan. Make sure backend is running.</div>';
+  }
+}
+
+async function generateRestDayPlan() {
+  if (!selectedRestOption || selectedRestOption === 'rest') return;
+
+  const btn = document.getElementById('rest-generate-btn');
+  btn.innerHTML = '<span class="spinner"></span> Generating...';
+  btn.disabled = true;
+
+  const typeMap = {
+    home: 'light home workout with no equipment — bodyweight exercises only, max 20 minutes',
+    stretch: 'stretching and mobility routine — focus on full body flexibility and muscle recovery'
+  };
+
+  const titleMap = {
+    home: '🏠 Home Workout',
+    stretch: '🧘 Stretching Routine'
+  };
+
+  try {
+    const res = await fetch('http://127.0.0.1:8000/modify-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        current_plan: '',
+        request: `Generate a ${typeMap[selectedRestOption]} for a ${member.experience} level person. Goal: ${member.goal}. Format as a list of exercises with sets and reps like: "- Exercise Name — 3x10"`,
+        profile: { goal: member.goal, diet_type: member.diet_type, injuries: member.injuries || 'None', experience: member.experience }
+      })
+    });
+    const data = await res.json();
+    const plan = data.modified_plan || '';
+
+    document.getElementById('rest-plan-section').style.display = 'block';
+    document.getElementById('rest-plan-title').textContent = titleMap[selectedRestOption];
+
+const lines = plan.split('\n');
+    const exercises = [];
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+
+      // pattern 1: "- Exercise Name — 3x10"
+      const match1 = trimmed.match(/^[-•*]\s*\*{0,2}(.+?)\*{0,2}\s*[—–-]{1,3}\s*(\d+[x×]\d+[\w\s]*)$/i);
+      if (match1) { exercises.push({ name: match1[1].trim(), detail: match1[2].trim() }); return; }
+
+      // pattern 2: "1. Exercise Name — 3x10"
+      const match2 = trimmed.match(/^\d+\.\s*\*{0,2}(.+?)\*{0,2}\s*[—–-]{1,3}\s*(\d+[x×\s\w]+)$/i);
+      if (match2) { exercises.push({ name: match2[1].trim(), detail: match2[2].trim() }); return; }
+
+      // pattern 3: "- Exercise Name (detail) — 3x10 reps"
+      const match3 = trimmed.match(/^[-•*\d.]+\s*\*{0,2}([A-Z][a-zA-Z\s\(\)]+?)\*{0,2}\s*[—–-]+\s*([\dx×\s\w]+(?:reps?|sec|min|minutes?)?)$/i);
+      if (match3) { exercises.push({ name: match3[1].trim(), detail: match3[2].trim() }); return; }
+    });
+
+    const checklist = document.getElementById('rest-exercise-checklist');
+    if (exercises.length) {
+      checklist.innerHTML = exercises.map((ex, i) => `
+        <div class="check-item" onclick="toggleRestEx(${i})" id="rex-${i}">
+          <div class="check-box" id="rbox-${i}"></div>
+          <div class="check-text">${ex.name}</div>
+          <div class="check-meta">${ex.detail}</div>
+        </div>
+      `).join('');
+      document.getElementById('rest-ex-progress').textContent = `0/${exercises.length}`;
+    } else {
+      checklist.innerHTML = `<div class="plan-render" style="padding:8px;font-size:0.85rem">${renderMarkdown(plan)}</div>`;
+    }
+
+  } catch {
+    document.getElementById('rest-plan-section').style.display = 'none';
+    alert('Could not generate plan. Check backend.');
+  } finally {
+    btn.innerHTML = 'Generate Plan →';
+    btn.disabled = false;
+  }
+}
+
+function toggleRestEx(i) {
+  restExercises[i] = !restExercises[i];
+  const item = document.getElementById(`rex-${i}`);
+  const box = document.getElementById(`rbox-${i}`);
+  const isDone = restExercises[i];
+  item.classList.toggle('done', isDone);
+  box.textContent = isDone ? '✓' : '';
+
+  const total = document.querySelectorAll('[id^="rex-"]').length;
+  const done = Object.values(restExercises).filter(Boolean).length;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('rest-ex-progress').textContent = `${done}/${total}`;
+  document.getElementById('rest-ex-bar').style.width = pct + '%';
+}
+
+// ── CHECK IN SCREEN ──
+function renderCheckIn() {
+  document.getElementById('main-content').innerHTML = `
+    <div class="checkin-banner">
+      <div class="checkin-left">
+        <div class="day-badge">📅 ${todayName} · ${muscleGroup}</div>
+        <div class="checkin-title">Ready to train today?</div>
+        <div class="checkin-sub">Hit the button when you reach the gym — your personalized plan will be generated instantly.</div>
+      </div>
+      <button class="btn btn-primary btn-lg" id="checkin-btn" onclick="handleCheckIn()">
+        🏋️ I Reached the Gym!
+      </button>
+    </div>
+    <div class="card" style="text-align:center;padding:48px">
+      <div style="font-size:2.5rem;margin-bottom:16px">💪</div>
+      <div style="font-size:1.1rem;font-weight:700;margin-bottom:8px">Today is ${muscleGroup} Day</div>
+      <div style="color:var(--text-secondary);font-size:0.9rem;max-width:360px;margin:0 auto">
+        Check in when you arrive at the gym and we'll generate your complete workout + meal timeline for today.
+      </div>
+    </div>
+  `;
+}
+
+// ── CHECK IN HANDLER ──
+async function handleCheckIn() {
+  const btn = document.getElementById('checkin-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generating your plan...';
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="loading-plan">
+      <div class="spinner"></div>
+      <div class="loading-text">Building your ${muscleGroup} plan...</div>
+      <div class="loading-steps">
+        <div class="loading-step active">🔍 Analyzing your profile...</div>
+        <div class="loading-step">🏋️ Selecting exercises for ${muscleGroup}...</div>
+        <div class="loading-step">🥗 Planning your food timeline...</div>
+        <div class="loading-step">✅ Finalizing your day...</div>
+      </div>
+    </div>
+  `;
+
+  // animate loading steps
+  const steps = document.querySelectorAll('.loading-step');
+  let s = 0;
+  const stepInterval = setInterval(() => {
+    if (steps[s]) steps[s].classList.remove('active');
+    s++;
+    if (steps[s]) steps[s].classList.add('active');
+    if (s >= steps.length) clearInterval(stepInterval);
+  }, 1800);
+
+  try {
+    const data = await API.generateDailyPlan(
+      member.member_id || member.id,
+      member, dayOfWeek, todayName
+    );
+
+    clearInterval(stepInterval);
+
+    const log = {
+      date: todayStr,
+      dayName: todayName,
+      muscleGroup,
+      plan: data.plan,
+      checkedIn: true,
+      exercises: {},
+      completed: false
+    };
+    DB.setDailyLog(todayStr, log);
+    DB.setLastActive(todayStr);
+
+    renderFullDay(data.plan, true, {}, false);
+  } catch(e) {
+    document.getElementById('main-content').innerHTML = `
+      <div class="alert alert-error">⚠ Could not generate plan. Make sure backend is running on port 8000.</div>
+      <button class="btn btn-primary" onclick="renderCheckIn()">Try Again</button>
+    `;
+  }
+}
+
+// ── FULL DAY VIEW ──
+function renderFullDay(planText, checkedIn, exercises, completed) {
+  const parsed = parsePlan(planText);
+  const log = DB.getDailyLog(todayStr) || {};
+
+  const doneCount = Object.values(exercises || {}).filter(Boolean).length;
+  const totalExercises = parsed.exercises.length;
+  const pct = totalExercises > 0 ? Math.round((doneCount / totalExercises) * 100) : 0;
+
+  document.getElementById('main-content').innerHTML = `
+
+    ${completed ? `
+    <div class="completion-banner">
+      <div class="completion-icon">🏆</div>
+      <div class="completion-title">Workout Complete! Amazing work.</div>
+      <div class="completion-sub">You crushed ${muscleGroup} today. Rest up and come back tomorrow.</div>
+    </div>` : `
+    <div class="checkin-banner">
+      <div class="checkin-left">
+        <div class="day-badge">✅ Checked In · ${muscleGroup}</div>
+        <div class="checkin-title">You're at the gym. Let's get it! 💪</div>
+        <div class="checkin-sub">${doneCount}/${totalExercises} exercises done · ${pct}% complete</div>
+      </div>
+      <div class="checkin-done">🔥 ${pct}%<br/><span style="font-size:0.75rem;font-weight:400">completed</span></div>
+    </div>`}
+
+    <div class="plan-grid">
+
+      <!-- EXERCISE CHECKLIST -->
+      <div class="exercise-card">
+        <div class="exercise-header">
+          <div class="exercise-header-title">🏋️ ${muscleGroup}</div>
+          <div class="exercise-progress-text" id="ex-progress-text">${doneCount}/${totalExercises}</div>
+        </div>
+        <div class="exercise-progress-bar">
+          <div class="exercise-progress-fill" id="ex-progress-bar" style="width:${pct}%"></div>
+        </div>
+        <div class="checklist-wrap">
+          <div class="checklist" id="exercise-checklist"></div>
+        </div>
+        ${!completed ? `
+        <div style="padding:0 16px 16px">
+          <button class="btn btn-primary btn-full" id="complete-btn" onclick="markComplete()" ${doneCount < totalExercises ? 'disabled' : ''}>
+            Mark Workout Complete ✓
+          </button>
+        </div>` : ''}
+      </div>
+
+      <!-- FOOD TIMELINE -->
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title">🥗 Today's Food Timeline</div>
+        <div class="food-timeline timeline" id="food-timeline"></div>
+      </div>
+
+    </div>
+
+    <!-- PLAN MODIFICATION AI -->
+    <div class="modify-section">
+      <div class="modify-header">
+        <span style="font-size:1.2rem">🤖</span>
+        <div>
+          <div style="font-weight:700;font-family:'Space Grotesk',sans-serif">Modify Today's Plan</div>
+          <div style="font-size:0.78rem;color:var(--text-secondary)">Ask AI to change exercises, swap food, or adjust intensity</div>
+        </div>
+      </div>
+      <div class="modify-chat" id="modify-chat">
+        <div class="msg coach">
+          <div class="msg-label">🤖 Coach</div>
+          <div class="msg-bubble">Hey! I can modify today's plan for you. Try saying things like "replace bench press with pushups", "I don't eat paneer, suggest alternatives", or "make it easier on my lower back".</div>
+        </div>
+      </div>
+      <div class="modify-input-row">
+        <input class="form-input" type="text" id="modify-input"
+          placeholder="e.g. replace leg press with lunges..."
+          onkeydown="if(event.key==='Enter') sendModify()"/>
+        <button class="btn btn-primary" id="modify-btn" onclick="sendModify()">Send</button>
+      </div>
+    </div>
+
+    <!-- FULL PLAN TEXT -->
+    <div class="card">
+      <div class="card-title">📋 Full Plan Details</div>
+      <div class="plan-render" id="full-plan-render"></div>
+    </div>
+
+  `;
+
+  renderExercises(parsed.exercises, exercises || {}, totalExercises);
+  renderFoodTimeline(parsed.food);
+  document.getElementById('full-plan-render').innerHTML = renderMarkdown(planText);
+}
+
+// ── PARSE PLAN ──
+function parsePlan(text) {
+  const exercises = [];
+  const food = [];
+
+  const lines = text.split('\n');
+  let inWorkoutSection = false;
+  let inFoodSection = false;
+
+  lines.forEach(line => {
+    const trimmed = line.trim();
+
+    // detect sections
+    if (trimmed.match(/TODAY'S WORKOUT|WORKOUT.*—|1\.\s*TODAY/i)) { inWorkoutSection = true; inFoodSection = false; return; }
+    if (trimmed.match(/TODAY'S FOOD|FOOD TIMELINE|2\.\s*TODAY/i)) { inWorkoutSection = false; inFoodSection = true; return; }
+    if (trimmed.match(/TODAY'S FOCUS|FOCUS TIP|3\.\s*TODAY/i)) { inWorkoutSection = false; inFoodSection = false; return; }
+
+    // parse exercises — only inside workout section
+    if (inWorkoutSection) {
+      const exMatch = trimmed.match(/(?:\d+\.|[-•*])\s*\*{0,2}([A-Za-z][^—\-*\n]{3,40}?)\*{0,2}\s*[—–-]+\s*([\dx×\s\(\)a-zA-Z\-]+)/i);
+      if (exMatch) {
+        const name = exMatch[1].trim();
+        const detail = exMatch[2].trim();
+        // make sure it looks like an exercise not food
+        if (!name.match(/breakfast|lunch|dinner|snack|meal|cup|tbsp|protein|yogurt|paneer|dal|rice/i)) {
+          exercises.push({ name, detail });
+        }
+      }
+    }
+
+    // parse food — only inside food section
+    if (inFoodSection) {
+      const mealMatch = trimmed.match(/\*{0,2}(Breakfast|Mid.Morning|Lunch|Evening|Dinner|Pre.Workout|Post.Workout)\*{0,2}[:\s]+(?:\(([^)]+)\)[:\s]*)?(.*)/i);
+      if (mealMatch && mealMatch[3].trim()) {
+        const timeMap = {
+          'breakfast': '8:00 AM', 'mid': '10:30 AM', 'lunch': '1:30 PM',
+          'eve': '4:30 PM', 'din': '8:00 PM', 'pre': '1hr before gym', 'post': '7:30 PM'
+        };
+        const key = mealMatch[1].toLowerCase().slice(0,3);
+        food.push({
+          time: mealMatch[2] || timeMap[key] || '',
+          title: mealMatch[1].replace(/\*/g,'').trim(),
+          desc: mealMatch[3].replace(/\*/g,'').trim()
+        });
+      }
+    }
+  });
+
+  return { exercises, food };
+}
+
+// ── RENDER EXERCISES ──
+function renderExercises(exercises, checked, total) {
+  const list = document.getElementById('exercise-checklist');
+  if (!list) return;
+  if (!exercises.length) {
+    list.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;text-align:center;padding:16px">No exercises parsed. Check full plan below.</div>';
+    return;
+  }
+  list.innerHTML = exercises.map((ex, i) => `
+    <div class="check-item ${checked[i] ? 'done' : ''}" onclick="toggleExercise(${i})" id="ex-${i}">
+      <div class="check-box">${checked[i] ? '✓' : ''}</div>
+      <div class="check-text">${ex.name}</div>
+      <div class="check-meta">${ex.detail}</div>
+    </div>
+  `).join('');
+}
+
+// ── TOGGLE EXERCISE ──
+function toggleExercise(i) {
+  const log = DB.getDailyLog(todayStr) || {};
+  if (!log.exercises) log.exercises = {};
+  log.exercises[i] = !log.exercises[i];
+  DB.setDailyLog(todayStr, log);
+
+  const item = document.getElementById(`ex-${i}`);
+  const isNowDone = log.exercises[i];
+  item.classList.toggle('done', isNowDone);
+  item.querySelector('.check-box').textContent = isNowDone ? '✓' : '';
+
+  const parsed = parsePlan(log.plan);
+  const total = parsed.exercises.length;
+  const doneCount = Object.values(log.exercises).filter(Boolean).length;
+  const pct = Math.round((doneCount / total) * 100);
+
+  const bar = document.getElementById('ex-progress-bar');
+  const txt = document.getElementById('ex-progress-text');
+  if (bar) bar.style.width = pct + '%';
+  if (txt) txt.textContent = `${doneCount}/${total}`;
+
+  const completeBtn = document.getElementById('complete-btn');
+  if (completeBtn) completeBtn.disabled = doneCount < total;
+
+  const sub = document.querySelector('.checkin-sub');
+  if (sub) sub.textContent = `${doneCount}/${total} exercises done · ${pct}% complete`;
+  const badge = document.querySelector('.checkin-done');
+  if (badge) badge.innerHTML = `🔥 ${pct}%<br/><span style="font-size:0.75rem;font-weight:400">completed</span>`;
+}
+
+// ── MARK COMPLETE ──
+function markComplete() {
+  const log = DB.getDailyLog(todayStr) || {};
+  log.completed = true;
+  DB.setDailyLog(todayStr, log);
+
+  const streak = DB.getStreak();
+  DB.setStreak(streak + 1);
+  DB.setLastActive(todayStr);
+  DB.markDay(todayStr, 4);
+
+  renderFullDay(log.plan, true, log.exercises, true);
+}
+
+// ── FOOD TIMELINE ──
+function renderFoodTimeline(food) {
+  const el = document.getElementById('food-timeline');
+  if (!el) return;
+  if (!food.length) {
+    el.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;padding:8px">No meal timeline found. Check full plan below.</div>';
+    return;
+  }
+  el.innerHTML = food.map((f, i) => `
+    <div class="timeline-item">
+      <div class="timeline-left">
+        <div class="timeline-dot"></div>
+        ${i < food.length - 1 ? '<div class="timeline-line"></div>' : ''}
+      </div>
+      <div>
+        <div class="timeline-time">${f.time}</div>
+        <div class="timeline-title">${f.title}</div>
+        <div class="timeline-desc">${f.desc}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── MODIFY PLAN AI ──
+let modifyHistory = [];
+async function sendModify() {
+  const input = document.getElementById('modify-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  const chat = document.getElementById('modify-chat');
+  const btn = document.getElementById('modify-btn');
+
+  addModifyMsg('user', msg);
+  modifyHistory.push({ role: 'user', content: msg });
+  input.value = '';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+
+  const log = DB.getDailyLog(todayStr) || {};
+  const currentPlan = log.plan || '';
+
+  try {
+    const data = await API.modifyPlan(currentPlan, msg, member);
+    const reply = data.modified_plan || data.plan || 'Sorry, could not modify the plan.';
+
+    log.plan = reply;
+    DB.setDailyLog(todayStr, log);
+
+    addModifyMsg('coach', '✅ Plan updated! Refreshing your exercises and timeline...');
+    modifyHistory.push({ role: 'assistant', content: reply });
+
+    setTimeout(() => {
+      const parsed = parsePlan(reply);
+      renderExercises(parsed.exercises, log.exercises || {}, parsed.exercises.length);
+      renderFoodTimeline(parsed.food);
+      document.getElementById('full-plan-render').innerHTML = renderMarkdown(reply);
+    }, 800);
+
+  } catch {
+    addModifyMsg('coach', '⚠ Could not reach backend. Please try again.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Send';
+  }
+}
+
+function addModifyMsg(role, text) {
+  const chat = document.getElementById('modify-chat');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.innerHTML = `
+    <div class="msg-label">${role === 'user' ? 'You' : '🤖 Coach'}</div>
+    <div class="msg-bubble">${text.replace(/\n/g,'<br/>')}</div>
+  `;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// ── MARKDOWN RENDERER ──
+function renderMarkdown(text) {
+  return text
+    .replace(/#{4} \*\*(.*?)\*\*/g,'<h4>$1</h4>')
+    .replace(/#{3} \*\*(.*?)\*\*/g,'<h3>$1</h3>')
+    .replace(/#{4} (.*?)(\n|$)/g,'<h4>$1</h4>')
+    .replace(/#{3} (.*?)(\n|$)/g,'<h3>$1</h3>')
+    .replace(/#{2} (.*?)(\n|$)/g,'<h2>$1</h2>')
+    .replace(/#{1} (.*?)(\n|$)/g,'<h1>$1</h1>')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,'<em>$1</em>')
+    .replace(/\n[-•] (.*?)(?=\n|$)/g,'<li>$1</li>')
+    .replace(/(<li>[\s\S]*?<\/li>)/g,'<ul>$1</ul>')
+    .replace(/\n\n/g,'</p><p>')
+    .replace(/^/,'<p>').replace(/$/,'</p>');
+}
+
+function logout() { DB.clearMember(); window.location.href = 'index.html'; }
+
+init();
+</script>
+</body>
+</html>
