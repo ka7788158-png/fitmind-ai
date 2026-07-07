@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from chain import generate_plan, chat_with_coach, generate_daily_plan, modify_existing_plan, calculate_food_calories
 from adaptive_graph import run_adaptive_coaching
 from weekly_graph import run_weekly_summary
+import os
 
 app = FastAPI(title="FitMind AI")
 
@@ -362,3 +363,8 @@ def weekly_summary(db: Session = Depends(get_db)):
 
     result = run_weekly_summary(profile.gym_name, members_data)
     return result
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
