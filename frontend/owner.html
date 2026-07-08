@@ -1126,6 +1126,7 @@ document.getElementById('pay-date').value = new Date().toISOString().split('T')[
 </body>
 </html>
 
+<script>
 async function loadWeeklySummary() {
   const btn = document.getElementById('weekly-btn');
   const loading = document.getElementById('weekly-loading');
@@ -1203,3 +1204,5 @@ function copyMessage() {
   const msg = document.getElementById('inactive-message').textContent;
   navigator.clipboard.writeText(msg).then(() => alert('Message copied!'));
 }
+
+</script>
