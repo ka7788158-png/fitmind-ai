@@ -6,6 +6,26 @@
 <title>Owner Dashboard — FitMind AI</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
+	.burger-menu {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		width: 24px;
+		height: 18px;
+		background: transparent;
+		border: none;
+		cursor: pointer;
+		padding: 0;
+		z-index: 10000;
+	}
+
+	.burger-menu span {
+		width: 100%;
+		height: 2px;
+		background-color: var(--text);
+		display: block;
+	}
+
   :root {
     --bg: #07060f;
     --bg2: #0e0c1a;
@@ -97,6 +117,29 @@
     position: fixed; top: 64px; left: 0;
     height: calc(100vh - 64px); overflow-y: auto;
     display: flex; flex-direction: column; gap: 2px;
+	transform: translateX(-100%);
+	transition: transform 0.3s ease;
+  }
+  .sidebar.open {
+	transform: translateX(0);
+  }
+  .content {
+    margin-left: 0;
+    flex: 1;
+    padding: 32px;
+    max-width: 1200px;
+  }
+
+  .burger-menu.active span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+  }
+
+  .burger-menu.active span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .burger-menu.active span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
   }
   .sb-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); padding: 10px 12px 4px; margin-top: 6px; }
   .sb-link {
@@ -228,7 +271,7 @@
   .empty { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 0.88rem; }
 
   @media (max-width: 768px) {
-    .sidebar { display: none; }
+    .sidebar { display: flex; }
     .content { margin-left: 0; padding: 20px 16px; }
     .form-grid2, .form-grid3 { grid-template-columns: 1fr; }
     .stats-grid { grid-template-columns: 1fr 1fr; }
@@ -262,6 +305,11 @@
 <div id="dashboard-screen" style="display:none">
 
 <nav class="nav">
+  <button class="burger-menu" aria-label="Toggle Menu">
+	<span></span>
+	<span></span>
+    <span></span>
+  </button>
   <div>
     <div class="nav-logo">Fit<span>Mind</span> AI</div>
     <div class="nav-gym" id="nav-gym-name">Owner Dashboard</div>
@@ -1123,6 +1171,7 @@ async function saveSettings() {
 // set today's date as default for payment form
 document.getElementById('pay-date').value = new Date().toISOString().split('T')[0];
 </script>
+<script src="js/script.js"></script>
 </body>
 </html>
 
