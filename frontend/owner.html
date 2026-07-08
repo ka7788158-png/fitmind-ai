@@ -270,12 +270,37 @@
   /* EMPTY */
   .empty { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 0.88rem; }
 
-  @media (max-width: 768px) {
-    .sidebar { display: flex; }
-    .content { margin-left: 0; padding: 20px 16px; }
-    .form-grid2, .form-grid3 { grid-template-columns: 1fr; }
-    .stats-grid { grid-template-columns: 1fr 1fr; }
+@media (max-width: 768px) {
+  .layout {
+    flex-direction: column;
+    padding-top: 64px;
   }
+
+  .sidebar {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    height: auto;
+    transform: none;
+    transition: none;
+    max-height: 0;
+    overflow: hidden;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-right: none;
+  }
+
+  .sidebar.open {
+    max-height: 100vh;
+    padding: 20px 10px;
+  }
+
+  .content {
+    margin-left: 0;
+    padding: 20px 16px;
+  }
+}
 </style>
 </head>
 <body>
