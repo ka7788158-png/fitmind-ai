@@ -19,6 +19,7 @@
   --text-primary: #eaf2ff;
   --text-secondary: #7a9bbf;
   --text-muted: #3d5a7a;
+  --text: var(--text-primary);
   --border: rgba(0,255,135,0.1);
   --border-hover: rgba(0,255,135,0.28);
   --card: rgba(15,28,48,0.85);
